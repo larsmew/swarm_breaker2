@@ -7,11 +7,9 @@ from operator import itemgetter
 from collections import deque
 from igraph import *
 import tempfile
-import itertools
 import subprocess
 import sys
 import time
-import copy
 import os
 
 manuelCut = False #Default: False
