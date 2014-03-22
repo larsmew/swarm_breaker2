@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 __author__ = "Lars Andersen <larsmew@gmail.com>"
 __date__ = "21/03/2014"
 __version__ = "$Revision: 1.0"
@@ -5,7 +8,7 @@ __version__ = "$Revision: 1.0"
 from optparse import OptionParser
 from operator import itemgetter
 from collections import deque
-from igraph import *
+#from igraph import *
 import tempfile
 import subprocess
 import sys
@@ -25,7 +28,6 @@ class Adjacency_list(object):
     belongingRoot = -1
     checked = False
     seed = False
-    
     newParent = -1
 
     # Initializer 
@@ -41,31 +43,31 @@ def option_parse():
     Parse arguments from command line.
     """
     desc = """Cut swarms."""
-    
+
     parser = OptionParser(usage="usage: %prog --input_file filename",
         description = desc,
         version = "%prog version 1.0")
-        
+
     parser.add_option("-f", "--fasta_file",
         metavar="<FILENAME>",
         action="store",
         dest="fasta_file",
         help="set <FILENAME> as fasta file.")
-        
+
     parser.add_option("-s", "--swarm_file",
         metavar="<FILENAME>",
         action="store",
         dest="swarm_file",
         help="set <FILENAME> as swarm file.")
-                      
+              
     parser.add_option("-i", "--input_file",
-        metavar = "<FILENAME>",
-        action = "store",
-        dest = "input_file",
-        help = "set <FILENAME> as input file.")
+        metavar="<FILENAME>",
+        action="store",
+        dest="input_file",
+        help="set <FILENAME> as input file.")
 
     (options, args) = parser.parse_args()
-    
+
     return options.fasta_file, options.swarm_file, options.input_file
 
 def fasta_parse(fasta_file):
@@ -421,7 +423,7 @@ if __name__ == '__main__':
         G[i].abundance = int(amplicons[i][1]) # the node's abundance
         G[i].num = i # ID in graph
     
-    if input_file is not None:
+    if input_file:
         # Create list of neighbours
         with open(input_file, "rU") as input_file:
             for line in input_file:
@@ -430,7 +432,7 @@ if __name__ == '__main__':
                 ampliconB = amplicon_index[ampliconB]
                 G[ampliconA].neighbours.append(ampliconB)
                 G[ampliconB].neighbours.append(ampliconA)
-    elif fasta_file is not None:
+    elif fasta_file:
         all_amplicons = fasta_parse(fasta_file)
     else:
         print "ERROR: NO INPUT FILE OR FASTA FILE GIVEN"
@@ -529,32 +531,8 @@ if __name__ == '__main__':
     #                     G[neighbour].neighbours.remove(node[0])
     # f.close()
     print "Time to make output files:",time.clock()-tim
-    
-    # Pause program
-    #raw_input()
-    
-    # i = 1
-    # for swarm in new_swarms:
-    #     if len(swarm) > 1500:
-    #         outputGML(swarm,[],"test"+str(i)+".gml")
-    #         i += 1       
-            
-    # print 
-    # print "573:",G[573].parent
-    # print "573:",G[573].abundance
-    # print G[573].neighbours
-    # print [G[neighbour].abundance for neighbour in G[573].neighbours]
-    # print G[573].belongingRoot
-    
-    
-    # paths = find_all_paths(G,0,1)
-    # print paths
-    # for path in paths:
-    #     print [G[i].abundance for i in path]
-    
-    
 
 
 """
-python -m cProfile breakOTUs.py -i OTU_001_26d2046e1a0f79450d6233ef29aab44e.data -s OTU_001_26d2046e1a0f79450d6233ef29aab44e.swarm
+python -m cProfile breakOTUs.py -i file.data -s file.swarm
 """
