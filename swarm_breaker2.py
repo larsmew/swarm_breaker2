@@ -184,27 +184,6 @@ def rewireFromRoot(G,node,threshold):
     G[node].parent = newParent
     G[node].belongingRoot = G[newParent].belongingRoot
 
-
-def rewire2(G,node,cutNode):
-    print "rewire2"
-    newParent = -1
-    belongingRootAbundance = G[G[node].belongingRoot].abundance
-    queue = deque([node])
-    while queue and newParent < 0:
-        for neighbour in G[queue.popleft()].neighbours:
-            if neighbour != G[node].parent and neighbour != cutNode:
-                curAbundance = G[G[neighbour].belongingRoot].abundance
-                if curAbundance > belongingRootAbundance:
-                    newParent = neighbour
-                    belongingRootAbundance = curAbundance
-                elif G[node].belongingRoot != G[neighbour].belongingRoot:
-                    queue.append(neighbour)
-    if newParent == -1:
-        return False
-    G[node].parent = newParent
-    G[node].belongingRoot = G[newParent].belongingRoot
-    return True
-
 def simpleCut(G):
     
     # Assign a "parent" to each node
