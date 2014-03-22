@@ -345,51 +345,6 @@ def find_path(graph, start, end, path=[]):
             newpath = find_path(graph, node, end, path)
             if newpath: return newpath
     return None
-    
-def outputGML(G,possibleCuts,output):
-    with open(output, 'w') as f:
-        # Setup
-        f.write("graph\n[\n")
-        f.write("\thierarchic\t1\n")
-        f.write("\tlabel\t\"\"\n")
-        f.write("\tdirected\t1\n")
-        
-        for node in G:
-            f.write("\tnode\n")
-            f.write("\t[\n")
-            f.write("\t\tid\t"+str(node.num)+"\n")
-            f.write("\t\tlabel\t\""+str(node.abundance)+"\"\n")
-            f.write("\t]\n")
-        
-        for node in G:
-            if node.parent != -2:
-                f.write("\tedge\n")
-                f.write("\t[\n")
-                f.write("\t\tsource\t"+str(node.num)+"\n")
-                f.write("\t\ttarget\t"+str(node.parent)+"\n")
-                f.write("\t\tgraphics\n")
-                f.write("\t\t[\n")
-                f.write("\t\t\tfill\t\"#000000\"\n")
-                f.write("\t\t\ttargetArrow\t\"delta\"\n")
-                f.write("\t\t]\n")
-                f.write("\t]\n")
-        
-        for edge in possibleCuts:
-            f.write("\tedge\n")
-            f.write("\t[\n")
-            f.write("\t\tsource\t"+str(edge[0])+"\n")
-            f.write("\t\ttarget\t"+str(edge[1])+"\n")
-            f.write("\t\tgraphics\n")
-            f.write("\t\t[\n")
-            f.write("\t\t\tfill\t\"#FF0000\"\n")
-            f.write("\t\t\tsourceArrow\t\"delta\"\n")
-            f.write("\t\t\ttargetArrow\t\"delta\"\n")
-            f.write("\t\t]\n")
-            f.write("\t]\n")
-        
-        # Finish
-        f.write("]")
-    f.close
 
 if __name__ == '__main__':
     
@@ -451,11 +406,6 @@ if __name__ == '__main__':
             print "No more final cuts found\n"
         else:
 
-            ### Output GML file with possibe cut in red ###
-            # tim = time.clock()
-            # outputGML(G,finalCuts,output_file_gml)
-            # print "Time to output GML:",time.clock()-tim
-        
             if iteration == 1:
                 print "Path:"
                 #path = find_path(G,12459,5889)
