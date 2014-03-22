@@ -518,18 +518,7 @@ if __name__ == '__main__':
                 f.write(str(G[node[0]].name)+"_"+str(node[1])+" ")
             f.write("\n")
     f.close()
-    
-    ### Output new data file ###
-    # with open(output_file_output, 'w') as f:
-    #     for swarm in new_swarms:
-    #         for node in swarm:
-    #             for neighbour in G[node[0]].neighbours:
-    #                 if node[1] > G[neighbour].abundance:
-    #                     f.write(str(G[node[0]].name)+"\t"+str(G[neighbour].name)+"\t1\n")
-    #                 elif node[1] == G[neighbour].abundance:
-    #                     f.write(str(G[node[0]].name)+"\t"+str(G[neighbour].name)+"\t1\n")
-    #                     G[neighbour].neighbours.remove(node[0])
-    # f.close()
+
     print "Time to make output files:",time.clock()-tim
 
 
