@@ -72,7 +72,7 @@ def option_parse():
     parser.add_option("-d", "--data_file",
                       metavar="<FILENAME>",
                       action="store",
-                      dest="input_file",
+                      dest="data_file",
                       help="set <FILENAME> as input file.")
 
     parser.add_option("-t", "--threshold",
@@ -91,7 +91,7 @@ def option_parse():
 
     (options, args) = parser.parse_args()
 
-    return options.fasta_file, options.swarm_file, options.input_file, \
+    return options.fasta_file, options.swarm_file, options.data_file, \
         options.threshold, options.manualCut
 
 
@@ -172,7 +172,7 @@ def outputSwarmFile(G, new_swarms, swarm_file):
 #                                  Initializer                                #
 #                                                                             #
 #*****************************************************************************#
-def buildGraph(fasta_file, swarm_file, input_file):
+def buildGraph(fasta_file, swarm_file, data_file):
     """
     Set up data structure (graph)
     """
@@ -196,10 +196,10 @@ def buildGraph(fasta_file, swarm_file, input_file):
         G[i].abundance = int(amplicons[i][1])  # the node's abundance
         G[i].num = i  # ID in graph
 
-    if input_file:
+    if data_file:
         # Create list of neighbours
-        with open(input_file, "rU") as input_file:
-            for line in input_file:
+        with open(data_file, "rU") as data_file:
+            for line in data_file:
                 ampliconA, ampliconB, differences = line.split()
                 ampliconA = amplicon_index[ampliconA]
                 ampliconB = amplicon_index[ampliconB]
@@ -528,13 +528,13 @@ def main():
     totim = time.clock()
 
     ### Parse command line options ###
-    fasta_file, swarm_file, input_file, threshold, manualCut = option_parse()
+    fasta_file, swarm_file, data_file, threshold, manualCut = option_parse()
 
     ### Set THRESHOLD value ###
     THRESHOLD = threshold  # Default: Ignore roots below 100
 
     ### Build data structure ###
-    G = buildGraph(fasta_file, swarm_file, input_file)
+    G = buildGraph(fasta_file, swarm_file, data_file)
 
     ### Compute cuts and break swarm ###
     new_swarm_seeds = breakSwarm(G, THRESHOLD, manualCut)
