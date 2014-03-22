@@ -77,7 +77,7 @@ def option_parse():
 
     parser.add_option("-t", "--threshold",
                       metavar="<VALUE>",
-                      type=int,
+                      type=float,
                       default=100,
                       action="store",
                       dest="threshold",
@@ -534,7 +534,7 @@ def main():
 
     ### Set THRESHOLD value ###
     # Default: Ignore roots below 100.
-    # if threshold >= 1, then we ignore toots below threshold,
+    # if threshold >= 1, then we ignore roots below threshold,
     # else we ignore a percentage of the whole network size.
     threshold = threshold if threshold >= 1 else threshold*len(G)
 
