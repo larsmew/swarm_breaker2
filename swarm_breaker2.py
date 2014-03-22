@@ -92,7 +92,7 @@ def manualCutter(G,possibleCuts):
 
 def prettyPrintCuts(G,finalCuts,tim):
     '''
-    A bad trail to give a nice output of the cuts.
+    A bad trial to give a nice output of the cuts.
     '''
     print
     print "Final cuts:"
@@ -110,7 +110,7 @@ def prettyPrintCuts(G,finalCuts,tim):
     print "Time:",tim
     print
     
-
+"""Two versions for rewire nodes' belonging root, if under treshold."""
 # Rewire from breaking point
 def rewireFromNode(G,node,threshold):
     newParent = -1
@@ -119,7 +119,8 @@ def rewireFromNode(G,node,threshold):
     while newParent < 0:
         for neighbour in G[queue.popleft()].neighbours:
             curAbundance = G[G[neighbour].belongingRoot].abundance
-            if curAbundance > threshold and curAbundance > belongingRootAbundance:
+            if curAbundance > threshold 
+            and curAbundance > belongingRootAbundance:
                 newParent = neighbour
                 belongingRootAbundance = curAbundance
             else:
@@ -127,6 +128,7 @@ def rewireFromNode(G,node,threshold):
     G[node].parent = newParent
     G[node].belongingRoot = G[newParent].belongingRoot
 
+# Rewire from belonging root to break point
 def rewireFromRoot(G,node,threshold):
     newParent = -1
     belongingRootAbundance = 0
@@ -134,7 +136,8 @@ def rewireFromRoot(G,node,threshold):
     while newParent < 0:
         for neighbour in G[queue.popleft()].neighbours:
             curAbundance = G[G[neighbour].belongingRoot].abundance
-            if curAbundance > threshold and curAbundance > belongingRootAbundance:
+            if curAbundance > threshold 
+            and curAbundance > belongingRootAbundance:
                 newParent = neighbour
                 belongingRootAbundance = curAbundance
             else:
