@@ -74,7 +74,7 @@ def option_parse():
                       action="store",
                       dest="input_file",
                       help="set <FILENAME> as input file.")
-                      
+
     parser.add_option("-t", "--threshold",
                       metavar="<VALUE>",
                       type=int,
@@ -92,7 +92,7 @@ def option_parse():
     (options, args) = parser.parse_args()
 
     return options.fasta_file, options.swarm_file, options.input_file, \
-           options.threshold, options.manualCut
+        options.threshold, options.manualCut
 
 
 def find_path(graph, start, end, path=[]):
@@ -500,7 +500,9 @@ def breakSwarm(G, THRESHOLD, manualCut):
                 G[node].seed = True
         G[edge[0]].neighbours.remove(edge[1])
         G[edge[1]].neighbours.remove(edge[0])
-    print "Making final cuts:", time.clock()-tim
+    print "Updating final cuts in data structure:", time.clock()-tim
+    #print "Seeds:\n", new_swarm_seeds
+    print "Num possible seeds:", len(new_swarm_seeds), "\n"
 
     # Testing purpose
     # path = find_path(G,0,1)
@@ -513,8 +515,6 @@ def breakSwarm(G, THRESHOLD, manualCut):
     # print G[1683].belongingRoot
     # print
 
-    #print "Seeds:\n", new_swarm_seeds
-    print "Num possible seeds:", len(new_swarm_seeds), "\n"
     return new_swarm_seeds
 
 
@@ -526,7 +526,7 @@ def breakSwarm(G, THRESHOLD, manualCut):
 def main():
 
     totim = time.clock()
-    
+
     ### Parse command line options ###
     fasta_file, swarm_file, input_file, threshold, manualCut = option_parse()
 
@@ -555,6 +555,6 @@ if __name__ == '__main__':
 
 
 """
-Run example (use -m cProfile, to test time):
-python breakOTUs.py -i file.data -s file.swarm
+Run example:
+python breakOTUs.py -d file.data -s file.swarm
 """
