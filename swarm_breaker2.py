@@ -176,6 +176,8 @@ def buildGraph(fasta_file, swarm_file, data_file):
     Set up data structure (graph)
     """
     print "Building data structure"
+    tim = time.clock()
+    
     with open(swarm_file, "rU") as swarm_file:
         for line in swarm_file:
             amplicons = [(amplicon.split("_")[0], int(amplicon.split("_")[1]))
@@ -209,6 +211,8 @@ def buildGraph(fasta_file, swarm_file, data_file):
     else:
         print "ERROR: NO DATA FILE OR FASTA FILE GIVEN"
         sys.exit(0)
+
+    print "Time:", time.clock()-tim
 
     return G
 
