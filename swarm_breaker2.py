@@ -70,48 +70,6 @@ def option_parse():
 
     return options.fasta_file, options.swarm_file, options.input_file
 
-def fasta_parse(fasta_file):
-    """
-    List amplicon ids, abundances and sequences, make a list and a dictionary
-    """
-    with open(fasta_file, "rU") as fasta_file:
-        all_amplicons = dict()
-        abundance = 0
-        amplicon = 0
-        for line in fasta_file:
-            if line.startswith(">"):
-                amplicon, abundance = line.strip(">\n").split("_")
-            else:
-                sequence = line.strip()
-                all_amplicons[amplicon] = (int(abundance), str(sequence))
-        return all_amplicons    
-
-def run_modified_swarm(all_amplicons, swarm):
-    """
-    Write temporary fasta files, apply the modified swarm and collect
-    the graph data
-    """
-    threshold = 1
-    swarm_modified = ["/home/fred/Science/Projects/Swarms/swarm/swarm", "-d", str(threshold)]
-    with open(os.devnull, "w") as devnull:
-        with tempfile.SpooledTemporaryFile() as tmp_fasta_file:
-            with tempfile.SpooledTemporaryFile() as tmp_swarm_results:
-                for amplicon, abundance in swarm:
-                    sequence = all_amplicons[amplicon][1]
-                    #print(">", amplicon, "_", str(abundance), "\n", sequence, sep="", file=tmp_fasta_file)
-                tmp_fasta_file.seek(0)  # rewind to the begining of the file
-                proc = subprocess.Popen(swarm_modified,
-                                        stderr=tmp_swarm_results,
-                                        stdout=devnull,
-                                        stdin=tmp_fasta_file,
-                                        close_fds=True)
-                proc.wait()  # usefull or not?
-                tmp_swarm_results.seek(0)  # rewind to the begining of the file
-                graph_data = [line.strip().split("\t")[1:4]
-                              for line in tmp_swarm_results
-                              if line.startswith("@")]
-                return graph_data
-
 def manualCutter(G,possibleCuts):
     print
     print "ENTER MANUAL CUTTING MODE:"
@@ -367,7 +325,7 @@ if __name__ == '__main__':
                 G[ampliconA].neighbours.append(ampliconB)
                 G[ampliconB].neighbours.append(ampliconA)
     elif fasta_file:
-        all_amplicons = fasta_parse(fasta_file)
+        ### CODE FOR FASTA FILE HERE ###
     else:
         print "ERROR: NO INPUT FILE OR FASTA FILE GIVEN"
         sys.exit(0)
