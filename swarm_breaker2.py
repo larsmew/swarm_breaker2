@@ -16,7 +16,7 @@ import time
 import os
 
 manuelCut = False #Default: False
-THRESHOLD = 0
+#THRESHOLD = 0
 PARAMETER = True
 
 class Adjacency_list(object):
@@ -119,7 +119,7 @@ def rewireFromNode(G,node,threshold):
     while newParent < 0:
         for neighbour in G[queue.popleft()].neighbours:
             curAbundance = G[G[neighbour].belongingRoot].abundance
-            if curAbundance > threshold 
+            if curAbundance > threshold \
             and curAbundance > belongingRootAbundance:
                 newParent = neighbour
                 belongingRootAbundance = curAbundance
@@ -127,6 +127,7 @@ def rewireFromNode(G,node,threshold):
                 queue.append(neighbour)
     G[node].parent = newParent
     G[node].belongingRoot = G[newParent].belongingRoot
+
 
 # Rewire from belonging root to break point
 def rewireFromRoot(G,node,threshold):
@@ -136,7 +137,7 @@ def rewireFromRoot(G,node,threshold):
     while newParent < 0:
         for neighbour in G[queue.popleft()].neighbours:
             curAbundance = G[G[neighbour].belongingRoot].abundance
-            if curAbundance > threshold 
+            if curAbundance > threshold \
             and curAbundance > belongingRootAbundance:
                 newParent = neighbour
                 belongingRootAbundance = curAbundance
@@ -145,11 +146,13 @@ def rewireFromRoot(G,node,threshold):
     G[node].parent = newParent
     G[node].belongingRoot = G[newParent].belongingRoot
 
-def assignParent(G):
+
+"""Assign biggest neighbour as parent"""
+def assignParent(G,THRESHOLD):
     # Assign a "parent" to each node
     for node in G:
         # If node is a leaf, set only neighbour as parent if node is small
-        if len(node.neighbours) == 1  and node.abundance < THRESHOLD:
+        if len(node.neighbours) == 1 and node.abundance < THRESHOLD:
             node.parent = node.neighbours[0]
         # If node is the biggest in graph, ignore it
         elif node.num == 0:
@@ -167,7 +170,7 @@ def assignParent(G):
             if biggestNeighbourAbundance >= node.abundance:
                 node.parent = biggestNeighbour
             else:
-                node.parent = -2 # Has no parent
+                node.parent = -2  # Has no parent
                 node.belongingRoot = node.num
                 
     # Find name of node - Test purpose
@@ -176,7 +179,10 @@ def assignParent(G):
     # if node.abundance == 3403:
     #     print "2:",node.num
 
-def simpleCut(G):
+def simpleCut(G,THRESHOLD):
+    
+    ### Assign a parent (biggest neighbour) to each node ###
+    assignParent(G,THRESHOLD)
     
     tim = time.clock()
     
@@ -215,7 +221,7 @@ def simpleCut(G):
 
     
     # "Rewire" nodes connected to a parent with abundance lower than threshold
-    threshold = THRESHOLD if THRESHOLD > 1 else THRESHOLD*len(G)
+    threshold = THRESHOLD if THRESHOLD >= 1 else THRESHOLD*len(G)
     for edge in possibleCuts:
         for node in edge:
             if G[G[node].belongingRoot].abundance < threshold:
@@ -329,7 +335,7 @@ def main():
                 ampliconB = amplicon_index[ampliconB]
                 G[ampliconA].neighbours.append(ampliconB)
                 G[ampliconB].neighbours.append(ampliconA)
-    elif fasta_file:
+    #elif fasta_file:
         ### CODE FOR FASTA FILE HERE ###
     else:
         print "ERROR: NO INPUT FILE OR FASTA FILE GIVEN"
@@ -342,7 +348,7 @@ def main():
     while moreCuts:
         iteration += 1
         print "\nRunning iteration "+str(iteration)+":"
-        finalCuts = simpleCut(G)
+        finalCuts = simpleCut(G,THRESHOLD)
         if len(finalCuts) == 0:
             moreCuts = False
             print "No more final cuts found\n"
@@ -365,7 +371,8 @@ def main():
                 print G[nod].belongingRoot
                 print G[G[nod].belongingRoot].abundance
                 print G[nod].neighbours
-                print [G[G[nod].neighbours[i]].abundance for i in range(len(G[nod].neighbours))]
+                print [G[G[nod].neighbours[i]].abundance 
+                        for i in range(len(G[nod].neighbours))]
             
 
             ### Performing final cuts on graph structure ###
@@ -388,8 +395,8 @@ def main():
     # print G[1683].belongingRoot
     # print
     
-    print "Seeds:\n",new_swarm_seeds
-    print "Num possible seeds:",len(new_swarm_seeds)
+    print "Seeds:\n", new_swarm_seeds
+    print "Num possible seeds:", len(new_swarm_seeds)
     print 
 
     ### Find new swarms ###
@@ -404,7 +411,7 @@ def main():
             f.write("\n")
     f.close()
 
-    print "Time to make output files:",time.clock()-tim
+    print "Time to make output files:", time.clock()-tim
 
 
 #*****************************************************************************#
