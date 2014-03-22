@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 __author__ = "Lars Andersen <larsmew@gmail.com>"
-__date__ = "21/03/2014"
+__date__ = "22/03/2014"
 __version__ = "$Revision: 1.0"
 
 from optparse import OptionParser
@@ -389,13 +389,6 @@ if __name__ == '__main__':
 
     ### Find new swarms ###
     new_swarms = findNewSwarms(G,new_swarm_seeds)
-
-    # print
-    # print G[29689].belongingRoot
-    # for seed in new_swarm_seeds:
-    #     path = find_path(G,29689,seed)
-    #     if path:
-    #         print path
     
     tim = time.clock()
     ### Output new swarm file ###
