@@ -275,28 +275,35 @@ def findBelongingRoot(G,possibleCuts):
                 G[node].belongingRoot = G[currentNode.parent].belongingRoot
 
 
-def simpleCut(G,THRESHOLD):
-    
-    ### Measure time ###
-    tim = time.clock()
-    
-    ### Assign a parent (biggest neighbour) to each node ###
-    assignParent(G,THRESHOLD)
-    
-    ### Find possible cuts ###
-    possibleCuts = findPossibleCuts(G)
-
-    ### Find belonging root to each node in possibleCuts ###
-    findBelongingRoot(G,possibleCuts)
-
-    
-    # "Rewire" nodes connected to a parent with abundance lower than threshold
+def rewireNode(G,possibleCuts,THRESHOLD):
+    """
+    "Rewire" nodes connected to a parent with belonging root 
+    that has abundance lower than threshold
+    """
     threshold = THRESHOLD if THRESHOLD >= 1 else THRESHOLD*len(G)
     for edge in possibleCuts:
         for node in edge:
             if G[G[node].belongingRoot].abundance < threshold:
                 #rewireFromNode(G,node,threshold)
                 rewireFromRoot(G,node,threshold)
+
+
+def simpleCut(G,THRESHOLD):
+
+    ### Measure time ###
+    tim = time.clock()
+
+    ### Assign a parent (biggest neighbour) to each node ###
+    assignParent(G,THRESHOLD)
+
+    ### Find possible cuts ###
+    possibleCuts = findPossibleCuts(G)
+
+    ### Find belonging root to each node in possibleCuts ###
+    findBelongingRoot(G,possibleCuts)
+
+    ### rewire nodes with small belonging roots ###
+    rewireNode(G,possibleCuts,THRESHOLD)
     
     finalCuts = []
     # If manual cut on, the user gets to decide which edges will be cut.
@@ -305,6 +312,7 @@ def simpleCut(G,THRESHOLD):
     # Automatic cut
     else: 
         for edge in possibleCuts:
+            # Ignore candidates if both belongs to same root.
             if G[edge[0]].belongingRoot != G[edge[1]].belongingRoot:
                 ## TEST PURPOSE ONLY ##
                 if PARAMETER:
