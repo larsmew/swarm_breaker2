@@ -124,13 +124,15 @@ def manualCutter(G,possibleCuts):
     space3 = 18
     finalCuts = []
     for edge in possibleCuts:
-        len2 = space1-len(str([G[node].num for node in edge]))
-        len3 = space2-len(str([G[node].abundance for node in edge]))-4
-        len4 = space3-len(str([G[node].belongingRoot for node in edge]))-1
-        print " ",[G[node].num for node in edge]," "*len2,[G[node].abundance for node in edge]," "*len3,[G[node].belongingRoot for node in edge]," "*len4,[G[G[node].belongingRoot].abundance for node in edge],
-        answer = raw_input("cut? ")
-        if not answer == "n" or answer == "no" or answer == "nn":
-            finalCuts.append(edge)
+        # Ignore candidates if both belongs to same root.
+        if G[edge[0]].belongingRoot != G[edge[1]].belongingRoot:
+            len2 = space1-len(str([G[node].num for node in edge]))
+            len3 = space2-len(str([G[node].abundance for node in edge]))-4
+            len4 = space3-len(str([G[node].belongingRoot for node in edge]))-1
+            print " ",[G[node].num for node in edge]," "*len2,[G[node].abundance for node in edge]," "*len3,[G[node].belongingRoot for node in edge]," "*len4,[G[G[node].belongingRoot].abundance for node in edge],
+            answer = raw_input("cut? ")
+            if not answer == "n" or answer == "no" or answer == "nn":
+                finalCuts.append(edge)
     return finalCuts
 
 def prettyPrintCuts(G,finalCuts,tim):
