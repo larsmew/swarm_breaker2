@@ -73,7 +73,7 @@ def option_parse():
                       metavar="<FILENAME>",
                       action="store",
                       dest="data_file",
-                      help="set <FILENAME> as input file.")
+                      help="set <FILENAME> as data file.")
 
     parser.add_option("-t", "--threshold",
                       metavar="<VALUE>",
@@ -208,7 +208,7 @@ def buildGraph(fasta_file, swarm_file, data_file):
     #elif fasta_file:
         ### CODE FOR FASTA FILE HERE ###
     else:
-        print "ERROR: NO INPUT FILE OR FASTA FILE GIVEN"
+        print "ERROR: NO DATA FILE OR FASTA FILE GIVEN"
         sys.exit(0)
 
     return G
@@ -275,13 +275,13 @@ def prettyPrintCuts(G, finalCuts, tim):
 #                            Tools for computeCuts                            #
 #                                                                             #
 #*****************************************************************************#
-def assignParent(G, THRESHOLD):
+def assignParent(G, threshold):
     """
     Assign biggest neighbour as parent for each node in graph
     """
     for node in G:
         # If node is a leaf, set only neighbour as parent if node is small
-        if len(node.neighbours) == 1 and node.abundance < THRESHOLD:
+        if len(node.neighbours) == 1 and node.abundance < threshold:
             node.parent = node.neighbours[0]
         # If node is the biggest in graph, ignore it
         elif node.num == 0:
@@ -353,12 +353,11 @@ def findBelongingRoot(G, possibleCuts):
                 G[node].belongingRoot = G[currentNode.parent].belongingRoot
 
 
-def rewireNode(G, possibleCuts, THRESHOLD):
+def rewireNode(G, possibleCuts, threshold):
     """
     "Rewire" nodes connected to a parent with belonging root
     that has abundance lower than threshold
     """
-    threshold = THRESHOLD if THRESHOLD >= 1 else THRESHOLD*len(G)
     for edge in possibleCuts:
         for node in edge:
             if G[G[node].belongingRoot].abundance < threshold:
@@ -366,7 +365,7 @@ def rewireNode(G, possibleCuts, THRESHOLD):
                 rewireFromRoot(G, node, threshold)
 
 
-def findFinalCuts(G, possibleCuts, THRESHOLD, tim, manualCut):
+def findFinalCuts(G, possibleCuts, threshold, tim, manualCut):
     """
     Find final cuts, either by manually deciding the cuts or by
     using a parameter, or only using the threshold as tiebreaker.
@@ -390,7 +389,7 @@ def findFinalCuts(G, possibleCuts, THRESHOLD, tim, manualCut):
                                        G[G[edge[1]].belongingRoot].abundance)
                     if (smalletsRoot/weakSpot > 25
                         and biggestRoot/smalletsRoot < 10) \
-                            or smalletsRoot / weakSpot > THRESHOLD/2:
+                            or smalletsRoot / weakSpot > threshold/2:
                         finalCuts.append(edge)
                 else:
                     finalCuts.append(edge)
@@ -408,13 +407,13 @@ def findFinalCuts(G, possibleCuts, THRESHOLD, tim, manualCut):
 #                                 Break swarm                                 #
 #                                                                             #
 #*****************************************************************************#
-def computeCuts(G, THRESHOLD, manualCut):
+def computeCuts(G, threshold, manualCut):
 
     ### Measure time ###
     tim = time.clock()
 
     ### Assign a parent (biggest neighbour) to each node ###
-    assignParent(G, THRESHOLD)
+    assignParent(G, threshold)
 
     ### Find possible cuts ###
     possibleCuts = findPossibleCuts(G)
@@ -423,10 +422,10 @@ def computeCuts(G, THRESHOLD, manualCut):
     findBelongingRoot(G, possibleCuts)
 
     ### rewire nodes with small belonging roots ###
-    rewireNode(G, possibleCuts, THRESHOLD)
+    rewireNode(G, possibleCuts, threshold)
 
     ### find final cuts: manually, parameter, or only by threshold ###
-    finalCuts = findFinalCuts(G, possibleCuts, THRESHOLD, tim, manualCut)
+    finalCuts = findFinalCuts(G, possibleCuts, threshold, tim, manualCut)
 
     return finalCuts
 
@@ -462,14 +461,14 @@ def findNewSwarms(G, seeds):
     return new_swarms
 
 
-def breakSwarm(G, THRESHOLD, manualCut):
+def breakSwarm(G, threshold, manualCut):
     """
     Compute final cuts in the graph.
     Perform the final cut on data structure, and add nodes
         to the list of possible seeds.
     """
     new_swarm_seeds = [0]
-    finalCuts = computeCuts(G, THRESHOLD, manualCut)
+    finalCuts = computeCuts(G, threshold, manualCut)
 
     # For testing - to see paths
     # print "Path:"
@@ -530,14 +529,17 @@ def main():
     ### Parse command line options ###
     fasta_file, swarm_file, data_file, threshold, manualCut = option_parse()
 
-    ### Set THRESHOLD value ###
-    THRESHOLD = threshold  # Default: Ignore roots below 100
-
     ### Build data structure ###
     G = buildGraph(fasta_file, swarm_file, data_file)
 
+    ### Set THRESHOLD value ###
+    # Default: Ignore roots below 100.
+    # if threshold >= 1, then we ignore toots below threshold,
+    # else we ignore a percentage of the whole network size.
+    threshold = threshold if threshold >= 1 else threshold*len(G)
+
     ### Compute cuts and break swarm ###
-    new_swarm_seeds = breakSwarm(G, THRESHOLD, manualCut)
+    new_swarm_seeds = breakSwarm(G, threshold, manualCut)
 
     ### Find new swarms ###
     new_swarms = findNewSwarms(G, new_swarm_seeds)
