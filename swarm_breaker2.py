@@ -155,7 +155,7 @@ def prettyPrintCuts(G,finalCuts,tim):
     
 """
 Two versions for rewire nodes' belonging root, if under treshold.
-Testing which is better - rewireFromRoot most promising..
+Testing which is better - rewireFromRoot most promising.
 """
 def rewireFromNode(G,node,threshold):
     """
@@ -231,14 +231,14 @@ def assignParent(G,THRESHOLD):
     # if node.abundance == 3403:
     #     print "2:",node.num
 
-def simpleCut(G,THRESHOLD):
-    
-    ### Assign a parent (biggest neighbour) to each node ###
-    assignParent(G,THRESHOLD)
-    
+
+def findPossibleCuts(G):
+    """
+    Find possible cuts by finding edges where no nodes is 
+    pointing from or to it.
+    """
     tim = time.clock()
     
-    # Find possible cuts (in O(m))
     possibleCuts = []
     for node in G:
         for neighbour in node.neighbours:
@@ -248,12 +248,15 @@ def simpleCut(G,THRESHOLD):
     #print "Possible cuts:\n",possibleCuts
     print "Number of possible cuts:",len(possibleCuts)
     #prettyPrintCuts(G,possibleCuts,tim)
+    
     print "Time:",time.clock()-tim
-    
-     
-    tim = time.clock()
-    
-    # Find corresponding root for each node in possible cuts
+    return possibleCuts
+
+
+def findBelongingRoot(G,possibleCuts):
+    """
+    Find corresponding root for each node in possible cuts
+    """
     for edge in possibleCuts:
         for node in edge:
             if G[node].belongingRoot == -1:
@@ -270,6 +273,21 @@ def simpleCut(G,THRESHOLD):
                 #for n in path:
                 #    G[n].belongingRoot = G[currentNode.parent].belongingRoot
                 G[node].belongingRoot = G[currentNode.parent].belongingRoot
+
+
+def simpleCut(G,THRESHOLD):
+    
+    ### Measure time ###
+    tim = time.clock()
+    
+    ### Assign a parent (biggest neighbour) to each node ###
+    assignParent(G,THRESHOLD)
+    
+    ### Find possible cuts ###
+    possibleCuts = findPossibleCuts(G)
+
+    ### Find belonging root to each node in possibleCuts ###
+    findBelongingRoot(G,possibleCuts)
 
     
     # "Rewire" nodes connected to a parent with abundance lower than threshold
