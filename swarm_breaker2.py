@@ -78,6 +78,7 @@ def option_parse():
     parser.add_option("-t", "--threshold",
                       metavar="<VALUE>",
                       type=int,
+                      default=100,
                       action="store",
                       dest="threshold",
                       help="set <VALUE> as threshold.")
@@ -323,7 +324,7 @@ def findPossibleCuts(G):
                    G[neighbour].parent != node.num:
                     possibleCuts.append((node.num, neighbour))
     #print "Possible cuts:\n",possibleCuts
-    print "Number of possible cuts:", len(possibleCuts)
+    print "\nNumber of possible cuts:", len(possibleCuts)
     #prettyPrintCuts(G,possibleCuts,tim)
 
     print "Time:", time.clock() - tim
@@ -471,24 +472,24 @@ def breakSwarm(G, THRESHOLD, manualCut):
     finalCuts = computeCuts(G, THRESHOLD, manualCut)
 
     # For testing - to see paths
-    print "Path:"
-    #path = find_path(G,12459,5889)
-    path = find_path(G, 0, 824)
-    print path
-    print [G[i].abundance for i in path]
-    print [G[i].belongingRoot for i in path]
-    print [G[G[i].belongingRoot].abundance for i in path]
-    #print [G[i].parent for i in path]
-    #print [G[i].name for i in path]
-    #print [G[i].neighbours for i in path]
-    print
-    nod = 1683
-    print G[nod].abundance
-    print G[nod].belongingRoot
-    print G[G[nod].belongingRoot].abundance
-    print G[nod].neighbours
-    print [G[G[nod].neighbours[i]].abundance
-           for i in range(len(G[nod].neighbours))]
+    # print "Path:"
+    # #path = find_path(G,12459,5889)
+    # path = find_path(G, 0, 824)
+    # print path
+    # print [G[i].abundance for i in path]
+    # print [G[i].belongingRoot for i in path]
+    # print [G[G[i].belongingRoot].abundance for i in path]
+    # #print [G[i].parent for i in path]
+    # #print [G[i].name for i in path]
+    # #print [G[i].neighbours for i in path]
+    # print
+    # nod = 1683
+    # print G[nod].abundance
+    # print G[nod].belongingRoot
+    # print G[G[nod].belongingRoot].abundance
+    # print G[nod].neighbours
+    # print [G[G[nod].neighbours[i]].abundance
+    #        for i in range(len(G[nod].neighbours))]
 
     ### Performing final cuts on graph structure ###
     tim = time.clock()
@@ -524,13 +525,13 @@ def breakSwarm(G, THRESHOLD, manualCut):
 #*****************************************************************************#
 def main():
 
+    totim = time.clock()
+    
     ### Parse command line options ###
     fasta_file, swarm_file, input_file, threshold, manualCut = option_parse()
 
     ### Set THRESHOLD value ###
-    THRESHOLD = 100  # Default: Ignore roots below 100
-    if threshold:
-        THRESHOLD = threshold
+    THRESHOLD = threshold  # Default: Ignore roots below 100
 
     ### Build data structure ###
     G = buildGraph(fasta_file, swarm_file, input_file)
@@ -544,6 +545,7 @@ def main():
     ### Output new swarm file ###
     outputSwarmFile(G, new_swarms, swarm_file)
 
+    print "Total time used:", time.clock() - totim
 
 if __name__ == '__main__':
 
