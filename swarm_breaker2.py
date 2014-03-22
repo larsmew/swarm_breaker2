@@ -272,7 +272,7 @@ def prettyPrintCuts(G, finalCuts, tim):
 
 #*****************************************************************************#
 #                                                                             #
-#                            Tools for computeCuts                            #
+#                            Tools for break swarm                            #
 #                                                                             #
 #*****************************************************************************#
 def assignParent(G, threshold):
@@ -402,13 +402,36 @@ def findFinalCuts(G, possibleCuts, threshold, tim, manualCut):
     return finalCuts
 
 
+def updateDataStructure(G, finalCuts):
+    """
+    Performing final cuts on graph structure and
+    obtain possible seeds for new swarms.
+    """
+    tim = time.clock()
+    new_swarm_seeds = [0]
+    for edge in finalCuts:
+        for node in edge:
+            if not G[node].seed:
+                new_swarm_seeds.append(node)
+                G[node].seed = True
+        G[edge[0]].neighbours.remove(edge[1])
+        G[edge[1]].neighbours.remove(edge[0])
+    print "Updating final cuts in data structure:", time.clock()-tim
+    #print "Seeds:\n", new_swarm_seeds
+    print "Num possible seeds:", len(new_swarm_seeds), "\n"
+
+    return new_swarm_seeds
+
+
 #*****************************************************************************#
 #                                                                             #
 #                                 Break swarm                                 #
 #                                                                             #
 #*****************************************************************************#
-def computeCuts(G, threshold, manualCut):
-
+def breakSwarm(G, threshold, manualCut):
+    """
+    Compute final cuts in the graph.
+    """
     ### Measure time ###
     tim = time.clock()
 
@@ -427,7 +450,30 @@ def computeCuts(G, threshold, manualCut):
     ### find final cuts: manually, parameter, or only by threshold ###
     finalCuts = findFinalCuts(G, possibleCuts, threshold, tim, manualCut)
 
-    return finalCuts
+    # For testing - to see paths
+    # print "Path:"
+    # #path = find_path(G,12459,5889)
+    # path = find_path(G, 0, 824)
+    # print path
+    # print [G[i].abundance for i in path]
+    # print [G[i].belongingRoot for i in path]
+    # print [G[G[i].belongingRoot].abundance for i in path]
+    # #print [G[i].parent for i in path]
+    # #print [G[i].name for i in path]
+    # #print [G[i].neighbours for i in path]
+    # print
+    # nod = 1683
+    # print G[nod].abundance
+    # print G[nod].belongingRoot
+    # print G[G[nod].belongingRoot].abundance
+    # print G[nod].neighbours
+    # print [G[G[nod].neighbours[i]].abundance
+    #        for i in range(len(G[nod].neighbours))]
+
+    ### Update data structure with final cuts
+    new_swarm_seeds = updateDataStructure(G, finalCuts)
+
+    return new_swarm_seeds
 
 
 def findNewSwarms(G, seeds):
@@ -459,62 +505,6 @@ def findNewSwarms(G, seeds):
     if count != len(G):
         print "ERROR: DATA LOST AFTER CUTTING."
     return new_swarms
-
-
-def breakSwarm(G, threshold, manualCut):
-    """
-    Compute final cuts in the graph.
-    Perform the final cut on data structure, and add nodes
-        to the list of possible seeds.
-    """
-    new_swarm_seeds = [0]
-    finalCuts = computeCuts(G, threshold, manualCut)
-
-    # For testing - to see paths
-    # print "Path:"
-    # #path = find_path(G,12459,5889)
-    # path = find_path(G, 0, 824)
-    # print path
-    # print [G[i].abundance for i in path]
-    # print [G[i].belongingRoot for i in path]
-    # print [G[G[i].belongingRoot].abundance for i in path]
-    # #print [G[i].parent for i in path]
-    # #print [G[i].name for i in path]
-    # #print [G[i].neighbours for i in path]
-    # print
-    # nod = 1683
-    # print G[nod].abundance
-    # print G[nod].belongingRoot
-    # print G[G[nod].belongingRoot].abundance
-    # print G[nod].neighbours
-    # print [G[G[nod].neighbours[i]].abundance
-    #        for i in range(len(G[nod].neighbours))]
-
-    ### Performing final cuts on graph structure ###
-    tim = time.clock()
-    for edge in finalCuts:
-        for node in edge:
-            if not G[node].seed:
-                new_swarm_seeds.append(node)
-                G[node].seed = True
-        G[edge[0]].neighbours.remove(edge[1])
-        G[edge[1]].neighbours.remove(edge[0])
-    print "Updating final cuts in data structure:", time.clock()-tim
-    #print "Seeds:\n", new_swarm_seeds
-    print "Num possible seeds:", len(new_swarm_seeds), "\n"
-
-    # Testing purpose
-    # path = find_path(G,0,1)
-    # print path
-    # print [G[i].abundance for i in path]
-    # print G[1683].neighbours
-    # print [G[G[1683].neighbours[i]].abundance for i in
-    #        range(len(G[1683].neighbours))]
-    # print G[G[1683].belongingRoot].abundance
-    # print G[1683].belongingRoot
-    # print
-
-    return new_swarm_seeds
 
 
 #*****************************************************************************#
