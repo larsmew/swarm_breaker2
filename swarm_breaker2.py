@@ -13,7 +13,6 @@ import sys
 import time
 import os
 
-manuelCut = False  # Default: False
 PARAMETER = True
 
 
@@ -75,10 +74,24 @@ def option_parse():
                       action="store",
                       dest="input_file",
                       help="set <FILENAME> as input file.")
+                      
+    parser.add_option("-t", "--threshold",
+                      metavar="<VALUE>",
+                      type=int,
+                      action="store",
+                      dest="threshold",
+                      help="set <VALUE> as threshold.")
+
+    parser.add_option("-m", "--manual",
+                      default=False,
+                      action="store_true",
+                      dest="manualCut",
+                      help="Activate manual cutting mode.")
 
     (options, args) = parser.parse_args()
 
-    return options.fasta_file, options.swarm_file, options.input_file
+    return options.fasta_file, options.swarm_file, options.input_file, \
+           options.threshold, options.manualCut
 
 
 def find_path(graph, start, end, path=[]):
@@ -162,7 +175,7 @@ def buildGraph(fasta_file, swarm_file, input_file):
     """
     Set up data structure (graph)
     """
-    print "Building data structures"
+    print "Building data structure"
     with open(swarm_file, "rU") as swarm_file:
         for line in swarm_file:
             amplicons = [(amplicon.split("_")[0], int(amplicon.split("_")[1]))
@@ -352,15 +365,15 @@ def rewireNode(G, possibleCuts, THRESHOLD):
                 rewireFromRoot(G, node, threshold)
 
 
-def findFinalCuts(G, possibleCuts, THRESHOLD, tim):
+def findFinalCuts(G, possibleCuts, THRESHOLD, tim, manualCut):
     """
     Find final cuts, either by manually deciding the cuts or by
     using a parameter, or only using the threshold as tiebreaker.
     """
     finalCuts = []
     # If manual cut on, the user gets to decide which edges will be cut.
-    if manuelCut:
-        finalCuts = manualCutter(G, possibleCuts, finalCuts)
+    if manualCut:
+        finalCuts = manualCutter(G, possibleCuts)
     # Automatic cut
     else:
         for edge in possibleCuts:
@@ -394,7 +407,7 @@ def findFinalCuts(G, possibleCuts, THRESHOLD, tim):
 #                                 Break swarm                                 #
 #                                                                             #
 #*****************************************************************************#
-def computeCuts(G, THRESHOLD):
+def computeCuts(G, THRESHOLD, manualCut):
 
     ### Measure time ###
     tim = time.clock()
@@ -412,7 +425,7 @@ def computeCuts(G, THRESHOLD):
     rewireNode(G, possibleCuts, THRESHOLD)
 
     ### find final cuts: manually, parameter, or only by threshold ###
-    finalCuts = findFinalCuts(G, possibleCuts, THRESHOLD, tim)
+    finalCuts = findFinalCuts(G, possibleCuts, THRESHOLD, tim, manualCut)
 
     return finalCuts
 
@@ -448,7 +461,7 @@ def findNewSwarms(G, seeds):
     return new_swarms
 
 
-def breakSwarm(G, THRESHOLD):
+def breakSwarm(G, THRESHOLD, manualCut):
     """
     Iteratively compute final cuts in the graph.
     Perform the final cut on data structure, and add nodes
@@ -460,7 +473,7 @@ def breakSwarm(G, THRESHOLD):
     while moreCuts:
         iteration += 1
         print "\nRunning iteration "+str(iteration)+":"
-        finalCuts = computeCuts(G, THRESHOLD)
+        finalCuts = computeCuts(G, THRESHOLD, manualCut)
         if len(finalCuts) == 0:
             moreCuts = False
             print "No more final cuts found\n"
@@ -521,17 +534,20 @@ def breakSwarm(G, THRESHOLD):
 #*****************************************************************************#
 def main():
 
-    ### Set THRESHOLD value ###
-    THRESHOLD = 100
-
     ### Parse command line options ###
-    fasta_file, swarm_file, input_file = option_parse()
+    fasta_file, swarm_file, input_file, threshold, manualCut = option_parse()
+    print "threshold:",manualCut
+
+    ### Set THRESHOLD value ###
+    THRESHOLD = 100  # Default: Ignore roots below 100
+    if threshold:
+        THRESHOLD = threshold
 
     ### Build data structure ###
     G = buildGraph(fasta_file, swarm_file, input_file)
 
     ### Compute cuts and break swarm ###
-    new_swarm_seeds = breakSwarm(G, THRESHOLD)
+    new_swarm_seeds = breakSwarm(G, THRESHOLD, manualCut)
 
     ### Find new swarms ###
     new_swarms = findNewSwarms(G, new_swarm_seeds)
