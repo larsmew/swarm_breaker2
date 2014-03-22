@@ -17,6 +17,11 @@ manuelCut = False  # Default: False
 PARAMETER = True
 
 
+#*****************************************************************************#
+#                                                                             #
+#                                Data structure                               #
+#                                                                             #
+#*****************************************************************************#
 class Adjacency_list(object):
     neighbours = []
     parent = -1
@@ -38,6 +43,11 @@ def make_adjlist(neighbours):
     return adjacency_list
 
 
+#*****************************************************************************#
+#                                                                             #
+#                                   Helpers                                   #
+#                                                                             #
+#*****************************************************************************#
 def option_parse():
     """
     Parse arguments from command line.
@@ -71,6 +81,83 @@ def option_parse():
     return options.fasta_file, options.swarm_file, options.input_file
 
 
+def find_path(graph, start, end, path=[]):
+    path = path + [start]
+    if start == end:
+        return path
+    for node in graph[start].neighbours:
+        if node not in path:
+            newpath = find_path(graph, node, end, path)
+            if newpath:
+                return newpath
+    return None
+
+
+### Two versions for rewire nodes' belonging root, if under treshold.
+### Testing which is better - rewireFromRoot seems most promising.
+def rewireFromNode(G, node, threshold):
+    """
+    Rewire node from breaking point, if belonging root is below threshold.
+    """
+    newParent = -1
+    belongingRootAbundance = 0
+    queue = deque([node])
+    while newParent < 0:
+        for neighbour in G[queue.popleft()].neighbours:
+            curAbundance = G[G[neighbour].belongingRoot].abundance
+            if curAbundance > threshold \
+               and curAbundance > belongingRootAbundance:
+                newParent = neighbour
+                belongingRootAbundance = curAbundance
+            else:
+                queue.append(neighbour)
+    G[node].parent = newParent
+    G[node].belongingRoot = G[newParent].belongingRoot
+
+
+def rewireFromRoot(G, node, threshold):
+    """
+    Rewire node (at break point) from belonging root,
+    if belonging root is below threshold.
+    """
+    newParent = -1
+    belongingRootAbundance = 0
+    queue = deque([G[node].belongingRoot])
+    while newParent < 0:
+        for neighbour in G[queue.popleft()].neighbours:
+            curAbundance = G[G[neighbour].belongingRoot].abundance
+            if curAbundance > threshold \
+               and curAbundance > belongingRootAbundance:
+                newParent = neighbour
+                belongingRootAbundance = curAbundance
+            else:
+                queue.append(neighbour)
+    G[node].parent = newParent
+    G[node].belongingRoot = G[newParent].belongingRoot
+
+
+def outputSwarmFile(G, new_swarms, swarm_file):
+    """
+    Output new swarm file
+    """
+    tim = time.clock()
+
+    output_file_swarm = os.path.splitext(swarm_file)[0]+"_new.swarm"
+    with open(output_file_swarm, 'w') as f:
+        for swarm in new_swarms:
+            for node in swarm:
+                f.write(str(G[node[0]].name)+"_"+str(node[1])+" ")
+            f.write("\n")
+    f.close()
+
+    print "Time used to make output files:", time.clock()-tim
+
+
+#*****************************************************************************#
+#                                                                             #
+#                                  Initializer                                #
+#                                                                             #
+#*****************************************************************************#
 def buildGraph(fasta_file, swarm_file, input_file):
     """
     Set up data structure (graph)
@@ -113,6 +200,11 @@ def buildGraph(fasta_file, swarm_file, input_file):
     return G
 
 
+#*****************************************************************************#
+#                                                                             #
+#                               Pretty printers                               #
+#                                                                             #
+#*****************************************************************************#
 def manualCutter(G, possibleCuts):
     print
     print "ENTER MANUAL CUTTING MODE:"
@@ -164,49 +256,11 @@ def prettyPrintCuts(G, finalCuts, tim):
     print "Time:", tim, "\n"
 
 
-### Two versions for rewire nodes' belonging root, if under treshold.
-### Testing which is better - rewireFromRoot most promising.
-def rewireFromNode(G, node, threshold):
-    """
-    Rewire node from breaking point, if belonging root is below threshold.
-    """
-    newParent = -1
-    belongingRootAbundance = 0
-    queue = deque([node])
-    while newParent < 0:
-        for neighbour in G[queue.popleft()].neighbours:
-            curAbundance = G[G[neighbour].belongingRoot].abundance
-            if curAbundance > threshold \
-               and curAbundance > belongingRootAbundance:
-                newParent = neighbour
-                belongingRootAbundance = curAbundance
-            else:
-                queue.append(neighbour)
-    G[node].parent = newParent
-    G[node].belongingRoot = G[newParent].belongingRoot
-
-
-def rewireFromRoot(G, node, threshold):
-    """
-    Rewire node (at break point) from belonging root,
-    if belonging root is below threshold.
-    """
-    newParent = -1
-    belongingRootAbundance = 0
-    queue = deque([G[node].belongingRoot])
-    while newParent < 0:
-        for neighbour in G[queue.popleft()].neighbours:
-            curAbundance = G[G[neighbour].belongingRoot].abundance
-            if curAbundance > threshold \
-               and curAbundance > belongingRootAbundance:
-                newParent = neighbour
-                belongingRootAbundance = curAbundance
-            else:
-                queue.append(neighbour)
-    G[node].parent = newParent
-    G[node].belongingRoot = G[newParent].belongingRoot
-
-
+#*****************************************************************************#
+#                                                                             #
+#                            Tools for computeCuts                            #
+#                                                                             #
+#*****************************************************************************#
 def assignParent(G, THRESHOLD):
     """
     Assign biggest neighbour as parent for each node in graph
@@ -335,6 +389,11 @@ def findFinalCuts(G, possibleCuts, THRESHOLD, tim):
     return finalCuts
 
 
+#*****************************************************************************#
+#                                                                             #
+#                                 Break swarm                                 #
+#                                                                             #
+#*****************************************************************************#
 def computeCuts(G, THRESHOLD):
 
     ### Measure time ###
@@ -389,18 +448,6 @@ def findNewSwarms(G, seeds):
     return new_swarms
 
 
-def find_path(graph, start, end, path=[]):
-    path = path + [start]
-    if start == end:
-        return path
-    for node in graph[start].neighbours:
-        if node not in path:
-            newpath = find_path(graph, node, end, path)
-            if newpath:
-                return newpath
-    return None
-
-
 def breakSwarm(G, THRESHOLD):
     """
     Iteratively compute final cuts in the graph.
@@ -451,6 +498,7 @@ def breakSwarm(G, THRESHOLD):
                 G[edge[1]].neighbours.remove(edge[0])
             print "Making final cuts:", time.clock()-tim
 
+    # Testing purpose
     # path = find_path(G,0,1)
     # print path
     # print [G[i].abundance for i in path]
@@ -466,23 +514,11 @@ def breakSwarm(G, THRESHOLD):
     return new_swarm_seeds
 
 
-def outputSwarmFile(G, new_swarms, swarm_file):
-    """
-    Output new swarm file
-    """
-    tim = time.clock()
-
-    output_file_swarm = os.path.splitext(swarm_file)[0]+"_new.swarm"
-    with open(output_file_swarm, 'w') as f:
-        for swarm in new_swarms:
-            for node in swarm:
-                f.write(str(G[node[0]].name)+"_"+str(node[1])+" ")
-            f.write("\n")
-    f.close()
-
-    print "Time used to make output files:", time.clock()-tim
-
-
+#*****************************************************************************#
+#                                                                             #
+#                                     Main                                    #
+#                                                                             #
+#*****************************************************************************#
 def main():
 
     ### Set THRESHOLD value ###
@@ -504,17 +540,12 @@ def main():
     outputSwarmFile(G, new_swarms, swarm_file)
 
 
-#*****************************************************************************#
-#                                                                             #
-#                                     Body                                    #
-#                                                                             #
-#*****************************************************************************#
-
 if __name__ == '__main__':
 
     main()
 
     sys.exit(0)
+
 
 """
 Run example (use -m cProfile, to test time):
