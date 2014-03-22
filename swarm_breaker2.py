@@ -288,23 +288,11 @@ def rewireNode(G,possibleCuts,THRESHOLD):
                 rewireFromRoot(G,node,threshold)
 
 
-def simpleCut(G,THRESHOLD):
-
-    ### Measure time ###
-    tim = time.clock()
-
-    ### Assign a parent (biggest neighbour) to each node ###
-    assignParent(G,THRESHOLD)
-
-    ### Find possible cuts ###
-    possibleCuts = findPossibleCuts(G)
-
-    ### Find belonging root to each node in possibleCuts ###
-    findBelongingRoot(G,possibleCuts)
-
-    ### rewire nodes with small belonging roots ###
-    rewireNode(G,possibleCuts,THRESHOLD)
-    
+def findFinalCuts(G,possibleCuts,THRESHOLD,tim):
+    """
+    Find final cuts, either by manually deciding the cuts or by 
+    using a parameter, or only using the threshold as tiebreaker.
+    """
     finalCuts = []
     # If manual cut on, the user gets to decide which edges will be cut.
     if manuelCut:
@@ -324,13 +312,36 @@ def simpleCut(G,THRESHOLD):
                 else:
                     finalCuts.append(edge)
     
-    
     ### Print Final Cuts ###
     if finalCuts:
         tim = time.clock()-tim
         prettyPrintCuts(G,finalCuts,tim)
 
     return finalCuts
+
+
+def simpleCut(G,THRESHOLD):
+
+    ### Measure time ###
+    tim = time.clock()
+
+    ### Assign a parent (biggest neighbour) to each node ###
+    assignParent(G,THRESHOLD)
+
+    ### Find possible cuts ###
+    possibleCuts = findPossibleCuts(G)
+
+    ### Find belonging root to each node in possibleCuts ###
+    findBelongingRoot(G,possibleCuts)
+
+    ### rewire nodes with small belonging roots ###
+    rewireNode(G,possibleCuts,THRESHOLD)
+    
+    ### find final cuts: manually, parameter, or only by threshold ###
+    finalCuts = findFinalCuts(G,possibleCuts,THRESHOLD,tim)
+
+    return finalCuts
+
 
 def findNewSwarms(G,seeds):
     ### Performing BFS to find new swarms ###
