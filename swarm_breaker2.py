@@ -339,7 +339,7 @@ def find_path(graph, start, end, path=[]):
     return None
 
 
-def computeCuts(G,THRESHOLD):
+def breakSwarm(G,THRESHOLD):
     """
     Iteratively compute final cuts in the graph.
     Perform the final cut on data structure, and add nodes
