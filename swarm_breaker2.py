@@ -286,7 +286,7 @@ def find_path(graph, start, end, path=[]):
             if newpath: return newpath
     return None
 
-if __name__ == '__main__':
+def main():
     
     # Set THRESHOLD value
     THRESHOLD = 100
@@ -404,6 +404,18 @@ if __name__ == '__main__':
 
     print "Time to make output files:",time.clock()-tim
 
+
+#*****************************************************************************#
+#                                                                             #
+#                                     Body                                    #
+#                                                                             #
+#*****************************************************************************#
+
+if __name__ == '__main__':
+
+    main()
+
+sys.exit(0)
 
 """
 python -m cProfile breakOTUs.py -i file.data -s file.swarm
