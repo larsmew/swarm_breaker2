@@ -30,7 +30,6 @@ class Adjacency_list(object):
     belongingRoot = -1
     checked = False
     seed = False
-    newParent = -1
 
     # Initializer
     def __init__(self, neighbours):
@@ -435,6 +434,12 @@ def breakSwarm(G, threshold, manualCut):
     ### Measure time ###
     tim = time.clock()
 
+    ### Set THRESHOLD value ###
+    # Default: Ignore roots below 100.
+    # if threshold >= 1, then we ignore roots below threshold,
+    # else we ignore a percentage of the whole network size.
+    threshold = threshold if threshold >= 1 else threshold*len(G)
+
     ### Assign a parent (biggest neighbour) to each node ###
     assignParent(G, threshold)
 
@@ -522,12 +527,6 @@ def main():
     ### Build data structure ###
     G = buildGraph(fasta_file, swarm_file, data_file)
 
-    ### Set THRESHOLD value ###
-    # Default: Ignore roots below 100.
-    # if threshold >= 1, then we ignore roots below threshold,
-    # else we ignore a percentage of the whole network size.
-    threshold = threshold if threshold >= 1 else threshold*len(G)
-
     ### Compute cuts and break swarm ###
     new_swarm_seeds = breakSwarm(G, threshold, manualCut)
 
@@ -538,6 +537,7 @@ def main():
     outputSwarmFile(G, new_swarms, swarm_file)
 
     print "Total time used:", time.clock() - totim
+
 
 if __name__ == '__main__':
 
