@@ -404,23 +404,12 @@ def computeCuts(G,THRESHOLD):
     return new_swarm_seeds
 
 
-def main():
-    
-    # Set THRESHOLD value
-    THRESHOLD = 100
-    
-    # Parse command line options.
-    fasta_file, swarm_file, input_file = option_parse()
-    
-    G = buildGraph(fasta_file, swarm_file, input_file)
-
-    new_swarm_seeds = computeCuts(G,THRESHOLD)
-
-    ### Find new swarms ###
-    new_swarms = findNewSwarms(G,new_swarm_seeds)
-
+def outputSwarmFile(G,new_swarms,swarm_file):
+    """
+    Output new swarm file
+    """
     tim = time.clock()
-    ### Output new swarm file ###
+    
     output_file_swarm = os.path.splitext(swarm_file)[0]+"_new.swarm"
     with open(output_file_swarm, 'w') as f:
         for swarm in new_swarms:
@@ -429,7 +418,28 @@ def main():
             f.write("\n")
     f.close()
 
-    print "Time to make output files:", time.clock()-tim
+    print "Time used to make output files:", time.clock()-tim
+
+
+def main():
+    
+    ### Set THRESHOLD value ###
+    THRESHOLD = 100
+    
+    ### Parse command line options ###
+    fasta_file, swarm_file, input_file = option_parse()
+    
+    ### Build data structure ###
+    G = buildGraph(fasta_file, swarm_file, input_file)
+
+    ### Compute cuts and break swarm ###
+    new_swarm_seeds = breakSwarm(G,THRESHOLD)
+
+    ### Find new swarms ###
+    new_swarms = findNewSwarms(G,new_swarm_seeds)
+    
+    ### Output new swarm file ###
+    outputSwarmFile(G,new_swarms,swarm_file)
 
 
 #*****************************************************************************#
