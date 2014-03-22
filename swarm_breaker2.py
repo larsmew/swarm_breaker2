@@ -70,6 +70,49 @@ def option_parse():
 
     return options.fasta_file, options.swarm_file, options.input_file
 
+
+def buildGraph(fasta_file, swarm_file, input_file):
+    """
+    Set up data structure (graph)
+    """
+    print "Building data structures"
+    with open(swarm_file, "rU") as swarm_file:
+        for line in swarm_file:
+            amplicons = [(amplicon.split("_")[0], int(amplicon.split("_")[1]))
+                     for amplicon in line.strip().split(" ")]
+
+    amplicon_index = {amplicon[0]: i for (i, amplicon) in enumerate(amplicons)}
+    #nodeNames = [name[0] for name in amplicons]
+    #abundance = [abund[1] for abund in amplicons]
+
+    # Initialize graph structure
+    G = [make_adjlist([]) for i in range(len(amplicon_index))]
+    print "Network size:",len(G)
+
+    # Insert name and abundance for each node
+    for i in range(len(G)):
+        G[i].name = amplicons[i][0] # The nodes hashed name
+        G[i].abundance = int(amplicons[i][1]) # the node's abundance
+        G[i].num = i # ID in graph
+
+    if input_file:
+        # Create list of neighbours
+        with open(input_file, "rU") as input_file:
+            for line in input_file:
+                ampliconA, ampliconB, differences = line.split()
+                ampliconA = amplicon_index[ampliconA]
+                ampliconB = amplicon_index[ampliconB]
+                G[ampliconA].neighbours.append(ampliconB)
+                G[ampliconB].neighbours.append(ampliconA)
+    #elif fasta_file:
+        ### CODE FOR FASTA FILE HERE ###
+    else:
+        print "ERROR: NO INPUT FILE OR FASTA FILE GIVEN"
+        sys.exit(0)
+        
+    return G
+    
+    
 def manualCutter(G,possibleCuts):
     print
     print "ENTER MANUAL CUTTING MODE:"
@@ -147,9 +190,10 @@ def rewireFromRoot(G,node,threshold):
     G[node].belongingRoot = G[newParent].belongingRoot
 
 
-"""Assign biggest neighbour as parent"""
 def assignParent(G,THRESHOLD):
-    # Assign a "parent" to each node
+    """
+    Assign biggest neighbour as parent for each node in graph
+    """
     for node in G:
         # If node is a leaf, set only neighbour as parent if node is small
         if len(node.neighbours) == 1 and node.abundance < THRESHOLD:
@@ -294,44 +338,7 @@ def find_path(graph, start, end, path=[]):
             if newpath: return newpath
     return None
 
-"""Set up data structure (graph)"""
-def buildGraph(fasta_file, swarm_file, input_file):
-    with open(swarm_file, "rU") as swarm_file:
-        for line in swarm_file:
-            amplicons = [(amplicon.split("_")[0], int(amplicon.split("_")[1]))
-                     for amplicon in line.strip().split(" ")]
 
-    amplicon_index = {amplicon[0]: i for (i, amplicon) in enumerate(amplicons)}
-    #nodeNames = [name[0] for name in amplicons]
-    #abundance = [abund[1] for abund in amplicons]
-
-    # Initialize graph structure
-    G = [make_adjlist([]) for i in range(len(amplicon_index))]
-    print "Network size:",len(G)
-
-    # Insert name and abundance for each node
-    for i in range(len(G)):
-        G[i].name = amplicons[i][0] # The nodes hashed name
-        G[i].abundance = int(amplicons[i][1]) # the node's abundance
-        G[i].num = i # ID in graph
-
-    if input_file:
-        # Create list of neighbours
-        with open(input_file, "rU") as input_file:
-            for line in input_file:
-                ampliconA, ampliconB, differences = line.split()
-                ampliconA = amplicon_index[ampliconA]
-                ampliconB = amplicon_index[ampliconB]
-                G[ampliconA].neighbours.append(ampliconB)
-                G[ampliconB].neighbours.append(ampliconA)
-    #elif fasta_file:
-        ### CODE FOR FASTA FILE HERE ###
-    else:
-        print "ERROR: NO INPUT FILE OR FASTA FILE GIVEN"
-        sys.exit(0)
-        
-    return G
-    
 def main():
     
     # Set THRESHOLD value
@@ -396,9 +403,8 @@ def main():
     # print G[1683].belongingRoot
     # print
 
-    print "Seeds:\n", new_swarm_seeds
-    print "Num possible seeds:", len(new_swarm_seeds)
-    print 
+    #print "Seeds:\n", new_swarm_seeds
+    print "Num possible seeds:", len(new_swarm_seeds),"\n"
 
     ### Find new swarms ###
     new_swarms = findNewSwarms(G,new_swarm_seeds)
