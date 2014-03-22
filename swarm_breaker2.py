@@ -145,18 +145,12 @@ def rewireFromRoot(G,node,threshold):
     G[node].parent = newParent
     G[node].belongingRoot = G[newParent].belongingRoot
 
-def simpleCut(G):
-    
+def assignParent(G):
     # Assign a "parent" to each node
     for node in G:
-        if node.abundance == 2708:
-            print "1:",node.num
-        if node.abundance == 3403:
-            print "2:",node.num
-        # If node is a leaf, set only neighbour as parent
+        # If node is a leaf, set only neighbour as parent if node is small
         if len(node.neighbours) == 1  and node.abundance < THRESHOLD:
             node.parent = node.neighbours[0]
-            #node.belongingRoot = node.neighbours[0]
         # If node is the biggest in graph, ignore it
         elif node.num == 0:
             node.parent = -2
@@ -175,6 +169,14 @@ def simpleCut(G):
             else:
                 node.parent = -2 # Has no parent
                 node.belongingRoot = node.num
+                
+    # Find name of node - Test purpose
+    # if node.abundance == 2708:
+    #     print "1:",node.num
+    # if node.abundance == 3403:
+    #     print "2:",node.num
+
+def simpleCut(G):
     
     tim = time.clock()
     
@@ -418,5 +420,6 @@ if __name__ == '__main__':
 sys.exit(0)
 
 """
-python -m cProfile breakOTUs.py -i file.data -s file.swarm
+Run example (use -m cProfile, to test time):
+python breakOTUs.py -i file.data -s file.swarm
 """
