@@ -153,9 +153,14 @@ def prettyPrintCuts(G,finalCuts,tim):
     print "Time:",tim
     print
     
-"""Two versions for rewire nodes' belonging root, if under treshold."""
-# Rewire from breaking point
+"""
+Two versions for rewire nodes' belonging root, if under treshold.
+Testing which is better - rewireFromRoot most promising..
+"""
 def rewireFromNode(G,node,threshold):
+    """
+    Rewire node from breaking point, if belonging root is below threshold.
+    """
     newParent = -1
     belongingRootAbundance = 0
     queue = deque([node])
@@ -172,8 +177,11 @@ def rewireFromNode(G,node,threshold):
     G[node].belongingRoot = G[newParent].belongingRoot
 
 
-# Rewire from belonging root to break point
 def rewireFromRoot(G,node,threshold):
+    """
+    Rewire node (at break point) from belonging root, 
+    if belonging root is below threshold.
+    """
     newParent = -1
     belongingRootAbundance = 0
     queue = deque([G[node].belongingRoot])
