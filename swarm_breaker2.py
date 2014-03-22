@@ -320,7 +320,7 @@ def findFinalCuts(G,possibleCuts,THRESHOLD,tim):
     return finalCuts
 
 
-def simpleCut(G,THRESHOLD):
+def computeCuts(G,THRESHOLD):
 
     ### Measure time ###
     tim = time.clock()
@@ -396,7 +396,7 @@ def breakSwarm(G,THRESHOLD):
     while moreCuts:
         iteration += 1
         print "\nRunning iteration "+str(iteration)+":"
-        finalCuts = simpleCut(G,THRESHOLD)
+        finalCuts = computeCuts(G,THRESHOLD)
         if len(finalCuts) == 0:
             moreCuts = False
             print "No more final cuts found\n"
