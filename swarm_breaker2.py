@@ -303,9 +303,7 @@ def main():
     fasta_file, swarm_file, input_file = option_parse()
     print fasta_file, swarm_file,input_file
     
-    output_file_gml = "test.gml"
     output_file_swarm = os.path.splitext(swarm_file)[0]+"_new.swarm"
-    output_file_output = os.path.splitext(swarm_file)[0]+"_new.data"
     
     with open(swarm_file, "rU") as swarm_file:
         for line in swarm_file:
