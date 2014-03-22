@@ -294,36 +294,27 @@ def find_path(graph, start, end, path=[]):
             if newpath: return newpath
     return None
 
-def main():
-    
-    # Set THRESHOLD value
-    THRESHOLD = 100
-    
-    # Parse command line options.
-    fasta_file, swarm_file, input_file = option_parse()
-    print fasta_file, swarm_file,input_file
-    
-    output_file_swarm = os.path.splitext(swarm_file)[0]+"_new.swarm"
-    
+"""Set up data structure (graph)"""
+def buildGraph(fasta_file, swarm_file, input_file):
     with open(swarm_file, "rU") as swarm_file:
         for line in swarm_file:
             amplicons = [(amplicon.split("_")[0], int(amplicon.split("_")[1]))
                      for amplicon in line.strip().split(" ")]
-        
+
     amplicon_index = {amplicon[0]: i for (i, amplicon) in enumerate(amplicons)}
     #nodeNames = [name[0] for name in amplicons]
     #abundance = [abund[1] for abund in amplicons]
-    
+
     # Initialize graph structure
     G = [make_adjlist([]) for i in range(len(amplicon_index))]
     print "Network size:",len(G)
-    
+
     # Insert name and abundance for each node
     for i in range(len(G)):
         G[i].name = amplicons[i][0] # The nodes hashed name
         G[i].abundance = int(amplicons[i][1]) # the node's abundance
         G[i].num = i # ID in graph
-    
+
     if input_file:
         # Create list of neighbours
         with open(input_file, "rU") as input_file:
@@ -338,7 +329,19 @@ def main():
     else:
         print "ERROR: NO INPUT FILE OR FASTA FILE GIVEN"
         sys.exit(0)
+        
+    return G
     
+def main():
+    
+    # Set THRESHOLD value
+    THRESHOLD = 100
+    
+    # Parse command line options.
+    fasta_file, swarm_file, input_file = option_parse()
+    
+    G = buildGraph(fasta_file, swarm_file, input_file)
+
     ### Compute simple cut ###
     moreCuts = True
     new_swarm_seeds = [0]
@@ -371,7 +374,7 @@ def main():
                 print G[nod].neighbours
                 print [G[G[nod].neighbours[i]].abundance 
                         for i in range(len(G[nod].neighbours))]
-            
+
 
             ### Performing final cuts on graph structure ###
             tim = time.clock()
@@ -383,7 +386,7 @@ def main():
                 G[edge[0]].neighbours.remove(edge[1])
                 G[edge[1]].neighbours.remove(edge[0])
             print "Making final cuts:",time.clock()-tim
-    
+
     # path = find_path(G,0,1)
     # print path
     # print [G[i].abundance for i in path]
@@ -392,16 +395,17 @@ def main():
     # print G[G[1683].belongingRoot].abundance
     # print G[1683].belongingRoot
     # print
-    
+
     print "Seeds:\n", new_swarm_seeds
     print "Num possible seeds:", len(new_swarm_seeds)
     print 
 
     ### Find new swarms ###
     new_swarms = findNewSwarms(G,new_swarm_seeds)
-    
+
     tim = time.clock()
     ### Output new swarm file ###
+    output_file_swarm = os.path.splitext(swarm_file)[0]+"_new.swarm"
     with open(output_file_swarm, 'w') as f:
         for swarm in new_swarms:
             for node in swarm:
