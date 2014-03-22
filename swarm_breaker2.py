@@ -339,17 +339,12 @@ def find_path(graph, start, end, path=[]):
     return None
 
 
-def main():
-    
-    # Set THRESHOLD value
-    THRESHOLD = 100
-    
-    # Parse command line options.
-    fasta_file, swarm_file, input_file = option_parse()
-    
-    G = buildGraph(fasta_file, swarm_file, input_file)
-
-    ### Compute simple cut ###
+def computeCuts(G,THRESHOLD):
+    """
+    Iteratively compute final cuts in the graph.
+    Perform the final cut on data structure, and add nodes
+        to the list of possible seeds.
+    """
     moreCuts = True
     new_swarm_seeds = [0]
     iteration = 0
@@ -361,7 +356,8 @@ def main():
             moreCuts = False
             print "No more final cuts found\n"
         else:
-
+            
+            # For testing - to see paths
             if iteration == 1:
                 print "Path:"
                 #path = find_path(G,12459,5889)
@@ -405,6 +401,20 @@ def main():
 
     #print "Seeds:\n", new_swarm_seeds
     print "Num possible seeds:", len(new_swarm_seeds),"\n"
+    return new_swarm_seeds
+
+
+def main():
+    
+    # Set THRESHOLD value
+    THRESHOLD = 100
+    
+    # Parse command line options.
+    fasta_file, swarm_file, input_file = option_parse()
+    
+    G = buildGraph(fasta_file, swarm_file, input_file)
+
+    new_swarm_seeds = computeCuts(G,THRESHOLD)
 
     ### Find new swarms ###
     new_swarms = findNewSwarms(G,new_swarm_seeds)
