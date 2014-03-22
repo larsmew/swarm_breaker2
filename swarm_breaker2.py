@@ -463,53 +463,43 @@ def findNewSwarms(G, seeds):
 
 def breakSwarm(G, THRESHOLD, manualCut):
     """
-    Iteratively compute final cuts in the graph.
+    Compute final cuts in the graph.
     Perform the final cut on data structure, and add nodes
         to the list of possible seeds.
     """
-    moreCuts = True
     new_swarm_seeds = [0]
-    iteration = 0
-    while moreCuts:
-        iteration += 1
-        print "\nRunning iteration "+str(iteration)+":"
-        finalCuts = computeCuts(G, THRESHOLD, manualCut)
-        if len(finalCuts) == 0:
-            moreCuts = False
-            print "No more final cuts found\n"
-        else:
+    finalCuts = computeCuts(G, THRESHOLD, manualCut)
 
-            # For testing - to see paths
-            if iteration == 1:
-                print "Path:"
-                #path = find_path(G,12459,5889)
-                path = find_path(G, 0, 824)
-                print path
-                print [G[i].abundance for i in path]
-                print [G[i].belongingRoot for i in path]
-                print [G[G[i].belongingRoot].abundance for i in path]
-                #print [G[i].parent for i in path]
-                #print [G[i].name for i in path]
-                #print [G[i].neighbours for i in path]
-                print
-                nod = 1683
-                print G[nod].abundance
-                print G[nod].belongingRoot
-                print G[G[nod].belongingRoot].abundance
-                print G[nod].neighbours
-                print [G[G[nod].neighbours[i]].abundance
-                       for i in range(len(G[nod].neighbours))]
+    # For testing - to see paths
+    print "Path:"
+    #path = find_path(G,12459,5889)
+    path = find_path(G, 0, 824)
+    print path
+    print [G[i].abundance for i in path]
+    print [G[i].belongingRoot for i in path]
+    print [G[G[i].belongingRoot].abundance for i in path]
+    #print [G[i].parent for i in path]
+    #print [G[i].name for i in path]
+    #print [G[i].neighbours for i in path]
+    print
+    nod = 1683
+    print G[nod].abundance
+    print G[nod].belongingRoot
+    print G[G[nod].belongingRoot].abundance
+    print G[nod].neighbours
+    print [G[G[nod].neighbours[i]].abundance
+           for i in range(len(G[nod].neighbours))]
 
-            ### Performing final cuts on graph structure ###
-            tim = time.clock()
-            for edge in finalCuts:
-                for node in edge:
-                    if not G[node].seed:
-                        new_swarm_seeds.append(node)
-                        G[node].seed = True
-                G[edge[0]].neighbours.remove(edge[1])
-                G[edge[1]].neighbours.remove(edge[0])
-            print "Making final cuts:", time.clock()-tim
+    ### Performing final cuts on graph structure ###
+    tim = time.clock()
+    for edge in finalCuts:
+        for node in edge:
+            if not G[node].seed:
+                new_swarm_seeds.append(node)
+                G[node].seed = True
+        G[edge[0]].neighbours.remove(edge[1])
+        G[edge[1]].neighbours.remove(edge[0])
+    print "Making final cuts:", time.clock()-tim
 
     # Testing purpose
     # path = find_path(G,0,1)
@@ -536,7 +526,6 @@ def main():
 
     ### Parse command line options ###
     fasta_file, swarm_file, input_file, threshold, manualCut = option_parse()
-    print "threshold:",manualCut
 
     ### Set THRESHOLD value ###
     THRESHOLD = 100  # Default: Ignore roots below 100
