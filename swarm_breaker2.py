@@ -111,6 +111,7 @@ def find_path(graph, start, end, path=[]):
 def rewireFromNode(G, node, threshold):
     """
     Rewire node from breaking point, if belonging root is below threshold.
+    i.e. performs BFS from breaking point to find new belonging root.
     """
     newParent = -1
     belongingRootAbundance = 0
@@ -124,7 +125,7 @@ def rewireFromNode(G, node, threshold):
                 belongingRootAbundance = curAbundance
             else:
                 queue.append(neighbour)
-    G[node].parent = newParent
+    #G[node].parent = newParent
     G[node].belongingRoot = G[newParent].belongingRoot
 
 
@@ -132,6 +133,7 @@ def rewireFromRoot(G, node, threshold):
     """
     Rewire node (at break point) from belonging root,
     if belonging root is below threshold.
+    i.e. performs BFS from belonging root to find new belonging root.
     """
     newParent = -1
     belongingRootAbundance = 0
@@ -145,7 +147,7 @@ def rewireFromRoot(G, node, threshold):
                 belongingRootAbundance = curAbundance
             else:
                 queue.append(neighbour)
-    G[node].parent = newParent
+    #G[node].parent = newParent
     G[node].belongingRoot = G[newParent].belongingRoot
 
 
@@ -177,7 +179,7 @@ def buildGraph(fasta_file, swarm_file, data_file):
     """
     print "Building data structure"
     tim = time.clock()
-    
+
     with open(swarm_file, "rU") as swarm_file:
         for line in swarm_file:
             amplicons = [(amplicon.split("_")[0], int(amplicon.split("_")[1]))
