@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function as print2
+from __future__ import print_function
 
 __author__ = "Lars Andersen <larsmew@gmail.com>"
 __date__ = "24/03/2014"
