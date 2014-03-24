@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+# from __future__ import print_function as print2
+
 __author__ = "Lars Andersen <larsmew@gmail.com>"
 __date__ = "24/03/2014"
 __version__ = "$Revision: 1.0"
@@ -151,17 +153,20 @@ def outputSwarmFile(G, new_swarms, swarm_file):
     """
     Output new swarm file
     """
+
     tim = time.clock()
 
-    output_file_swarm = os.path.splitext(swarm_file)[0]+"_new.swarm"
+    output_file_swarm = os.path.splitext(swarm_file)[0] + "_new.swarm"
     with open(output_file_swarm, 'w') as f:
         for swarm in new_swarms:
             for node in swarm:
+                # print2(node)
                 f.write(str(G[node[0]].name)+"_"+str(node[1])+" ")
             f.write("\n")
     f.close()
 
     print "Time used to make output files:", time.clock()-tim
+    return
 
 
 #*****************************************************************************#
@@ -182,18 +187,15 @@ def buildGraph(fasta_file, swarm_file, data_file):
                          for amplicon in line.strip().split(" ")]
 
     amplicon_index = {amplicon[0]: i for (i, amplicon) in enumerate(amplicons)}
-    #nodeNames = [name[0] for name in amplicons]
-    #abundance = [abund[1] for abund in amplicons]
 
-    # Initialize graph structure
-    G = [create_node() for i in range(len(amplicon_index))]
-    print "Network size:", len(G)
-
-    # Insert name and abundance for each node
-    for i in range(len(G)):
+    # Insert name and abundance of each node in the graph
+    G = []
+    for i in range(len(amplicon_index)):
+        G.append(create_node())
         G[i].name = amplicons[i][0]  # The nodes hashed name
         G[i].abundance = int(amplicons[i][1])  # the node's abundance
         G[i].num = i  # ID in graph
+    print "Network size:", len(G)
 
     if data_file:
         # Create list of neighbours
