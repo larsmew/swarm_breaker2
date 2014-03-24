@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+# from __future__ import print_function as print2
+
 __author__ = "Lars Andersen <larsmew@gmail.com>"
-__date__ = "22/03/2014"
+__date__ = "24/03/2014"
 __version__ = "$Revision: 1.0"
 
 from optparse import OptionParser
@@ -13,15 +15,17 @@ import sys
 import time
 import os
 
-PARAMETER = True
-
 
 #*****************************************************************************#
 #                                                                             #
 #                                Data structure                               #
 #                                                                             #
 #*****************************************************************************#
-class Adjacency_list(object):
+
+class Node(object):
+    """
+    Define the data structure of a node and its direct neighbours
+    """
     neighbours = []
     parent = -1
     name = ''
@@ -32,13 +36,16 @@ class Adjacency_list(object):
     seed = False
 
     # Initializer
-    def __init__(self, neighbours):
-        self.neighbours = neighbours
+    def __init__(self):
+        self.neighbours = []
 
 
-def make_adjlist(neighbours):
-    adjacency_list = Adjacency_list(neighbours)
-    return adjacency_list
+def create_node():
+    """
+    Create node objects
+    """
+    node = Node()
+    return node
 
 
 #*****************************************************************************#
@@ -46,6 +53,7 @@ def make_adjlist(neighbours):
 #                                   Helpers                                   #
 #                                                                             #
 #*****************************************************************************#
+
 def option_parse():
     """
     Parse arguments from command line.
@@ -88,13 +96,22 @@ def option_parse():
                       dest="manualCut",
                       help="Activate manual cutting mode.")
 
+    parser.add_option("-p", "--parameters",
+                      default=True,
+                      action="store_false",
+                      dest="parameters",
+                      help="Deactivate the use of parameters.")
+
     (options, args) = parser.parse_args()
 
     return options.fasta_file, options.swarm_file, options.data_file, \
-        options.threshold, options.manualCut
+        options.threshold, options.manualCut, options.parameters
 
 
 def find_path(graph, start, end, path=[]):
+    """
+    Find the shortest path between two nodes
+    """
     path = path + [start]
     if start == end:
         return path
@@ -106,66 +123,50 @@ def find_path(graph, start, end, path=[]):
     return None
 
 
-### Two versions for rewire nodes' belonging root, if under treshold.
-### Testing which is better - rewireFromRoot seems most promising.
-def rewireFromNode(G, node, threshold):
+def rewire(G, node, threshold, root=True):
     """
-    Rewire node from breaking point, if belonging root is below threshold.
-    i.e. performs BFS from breaking point to find new belonging root.
+    If belonging root is below threshold, rewire node from breaking
+    point's belonging root or from breaking point. Performs
+    breadth-first search (BFS) from starting point to find new
+    belonging root. Testing which version is better - rewire from root
+    seems most promising.
     """
     newParent = -1
     belongingRootAbundance = 0
-    queue = deque([node])
+    starting_point = G[node].belongingRoot if root else node
+    queue = deque([starting_point])
     while newParent < 0:
         for neighbour in G[queue.popleft()].neighbours:
             curAbundance = G[G[neighbour].belongingRoot].abundance
             if curAbundance > threshold \
-               and curAbundance > belongingRootAbundance:
+                    and curAbundance > belongingRootAbundance:
                 newParent = neighbour
                 belongingRootAbundance = curAbundance
             else:
                 queue.append(neighbour)
-    #G[node].parent = newParent
+    # G[node].parent = newParent
     G[node].belongingRoot = G[newParent].belongingRoot
-
-
-def rewireFromRoot(G, node, threshold):
-    """
-    Rewire node (at break point) from belonging root,
-    if belonging root is below threshold.
-    i.e. performs BFS from belonging root to find new belonging root.
-    """
-    newParent = -1
-    belongingRootAbundance = 0
-    queue = deque([G[node].belongingRoot])
-    while newParent < 0:
-        for neighbour in G[queue.popleft()].neighbours:
-            curAbundance = G[G[neighbour].belongingRoot].abundance
-            if curAbundance > threshold \
-               and curAbundance > belongingRootAbundance:
-                newParent = neighbour
-                belongingRootAbundance = curAbundance
-            else:
-                queue.append(neighbour)
-    #G[node].parent = newParent
-    G[node].belongingRoot = G[newParent].belongingRoot
+    return None
 
 
 def outputSwarmFile(G, new_swarms, swarm_file):
     """
     Output new swarm file
     """
+
     tim = time.clock()
 
-    output_file_swarm = os.path.splitext(swarm_file)[0]+"_new.swarm"
+    output_file_swarm = os.path.splitext(swarm_file)[0] + "_new.swarm"
     with open(output_file_swarm, 'w') as f:
         for swarm in new_swarms:
             for node in swarm:
+                # print2(node)
                 f.write(str(G[node[0]].name)+"_"+str(node[1])+" ")
             f.write("\n")
     f.close()
 
     print "Time used to make output files:", time.clock()-tim
+    return
 
 
 #*****************************************************************************#
@@ -186,18 +187,15 @@ def buildGraph(fasta_file, swarm_file, data_file):
                          for amplicon in line.strip().split(" ")]
 
     amplicon_index = {amplicon[0]: i for (i, amplicon) in enumerate(amplicons)}
-    #nodeNames = [name[0] for name in amplicons]
-    #abundance = [abund[1] for abund in amplicons]
 
-    # Initialize graph structure
-    G = [make_adjlist([]) for i in range(len(amplicon_index))]
-    print "Network size:", len(G)
-
-    # Insert name and abundance for each node
-    for i in range(len(G)):
+    # Insert name and abundance of each node in the graph
+    G = []
+    for i in range(len(amplicon_index)):
+        G.append(create_node())
         G[i].name = amplicons[i][0]  # The nodes hashed name
         G[i].abundance = int(amplicons[i][1])  # the node's abundance
         G[i].num = i  # ID in graph
+    print "Network size:", len(G)
 
     if data_file:
         # Create list of neighbours
@@ -379,12 +377,11 @@ def rewireNode(G, possibleCuts, threshold):
     for edge in possibleCuts:
         for node in edge:
             if G[G[node].belongingRoot].abundance < threshold:
-                #rewireFromNode(G, node, threshold)
-                rewireFromRoot(G, node, threshold)
+                rewire(G, node, threshold)
     print "Time:", time.clock()-tim
 
 
-def findFinalCuts(G, possibleCuts, threshold, manualCut):
+def findFinalCuts(G, possibleCuts, threshold, manualCut, parameters):
     """
     Find final cuts, either by manually deciding the cuts or by
     using a parameter, or only using the threshold as tiebreaker.
@@ -403,7 +400,7 @@ def findFinalCuts(G, possibleCuts, threshold, manualCut):
             # Ignore candidates if both belongs to same root.
             if G[edge[0]].belongingRoot != G[edge[1]].belongingRoot:
                 ## TEST PURPOSE ONLY ##
-                if PARAMETER:
+                if parameters:
                     weakSpot = min(G[edge[0]].abundance,
                                    G[edge[1]].abundance)
                     biggestRoot = max(G[G[edge[0]].belongingRoot].abundance,
@@ -451,7 +448,7 @@ def updateDataStructure(G, finalCuts):
 #                                 Break swarm                                 #
 #                                                                             #
 #*****************************************************************************#
-def breakSwarm(G, threshold, manualCut):
+def breakSwarm(G, threshold, manualCut, parameters):
     """
     Compute final cuts in the graph.
     """
@@ -474,7 +471,7 @@ def breakSwarm(G, threshold, manualCut):
     rewireNode(G, possibleCuts, threshold)
 
     ### find final cuts: manually, parameter, or only by threshold ###
-    finalCuts = findFinalCuts(G, possibleCuts, threshold, manualCut)
+    finalCuts = findFinalCuts(G, possibleCuts, threshold, manualCut, parameters)
 
     # For testing - to see paths
     # print "Path:"
@@ -543,13 +540,13 @@ def main():
     totim = time.clock()
 
     ### Parse command line options ###
-    fasta_file, swarm_file, data_file, threshold, manualCut = option_parse()
+    fasta_file, swarm_file, data_file, threshold, manualCut, parameters = option_parse()
 
     ### Build data structure ###
     G = buildGraph(fasta_file, swarm_file, data_file)
 
     ### Compute cuts and break swarm ###
-    new_swarm_seeds = breakSwarm(G, threshold, manualCut)
+    new_swarm_seeds = breakSwarm(G, threshold, manualCut, parameters)
 
     ### Find new swarms ###
     new_swarms = findNewSwarms(G, new_swarm_seeds)
@@ -571,3 +568,36 @@ if __name__ == '__main__':
 Run example:
 python breakOTUs.py -d file.data -s file.swarm
 """
+
+# python swarm_breaker2.py -s ./examples/OTU_006_b970fcbdd71ad2a333f702c7ecfe7114.swarm -d ./examples/OTU_006_b970fcbdd71ad2a333f702c7ecfe7114.data
+# Building data structure
+# Network size: 2480
+# Time: 0.013227
+
+# Assigning parents
+# Time: 0.000986
+
+# Finding possible cuts... found 13 possible cuts
+# Time: 0.001195
+
+# Finding belonging roots
+# Time: 3.3e-05
+
+# Rewiring nodes
+# Time: 5.6e-05
+
+# Finding final cuts:
+# [Cand for cut]    [Cand abundance]     [Closest root]    [Roots abundance]
+#   [1994, 2171]        [9, 2]            [2169, 2280]       [354, 311]
+# Number of final cuts: 1
+# Time: 1.4e-05 
+
+# Updating final cuts in data structure: 6e-06
+# Number of possible seeds: 3 
+
+# Performing BFS to discover new swarms...
+# Visited nodes: 2480
+# BFS time: 0.003767
+# Num swarms: 2
+# Time used to make output files: 0.003382
+# Total time used: 0.023511
