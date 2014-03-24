@@ -123,32 +123,6 @@ def find_path(graph, start, end, path=[]):
     return None
 
 
-def rewire(G, node, threshold, root=True):
-    """
-    If belonging root is below threshold, rewire node from breaking
-    point's belonging root or from breaking point. Performs
-    breadth-first search (BFS) from starting point to find new
-    belonging root. Testing which version is better - rewire from root
-    seems most promising.
-    """
-    newParent = -1
-    belongingRootAbundance = 0
-    starting_point = G[node].belongingRoot if root else node
-    queue = deque([starting_point])
-    while newParent < 0:
-        for neighbour in G[queue.popleft()].neighbours:
-            curAbundance = G[G[neighbour].belongingRoot].abundance
-            if curAbundance > threshold \
-                    and curAbundance > belongingRootAbundance:
-                newParent = neighbour
-                belongingRootAbundance = curAbundance
-            else:
-                queue.append(neighbour)
-    # G[node].parent = newParent
-    G[node].belongingRoot = G[newParent].belongingRoot
-    return None
-
-
 def outputSwarmFile(G, new_swarms, swarm_file):
     """
     Output new swarm file
@@ -191,15 +165,18 @@ def buildGraph(fasta_file, swarm_file, data_file):
     print "Time for reading swarm file:", time.clock()-tim2
 
     tim2 = time.clock()
-    # Insert name and abundance of each node in the graph
+    # Initialize graph structure
     G = [create_node() for _ in range(len(amplicon_index))]
+    print "Time for creating graph:", time.clock()-tim2
+
+    tim2 = time.clock()
+    # Insert name and abundance of each node in the graph
     for i in range(len(amplicon_index)):
         G[i].name = amplicons[i][0]  # The nodes hashed name
         G[i].abundance = int(amplicons[i][1])  # the node's abundance
         G[i].num = i  # ID in graph
-    print "Network size:", len(G)
-    print "Time for creating graph and insertion:", time.clock()-tim2
-    
+    print "Time for inserting name, abundance, id:", time.clock()-tim2
+
     tim2 = time.clock()
     if data_file:
         # Create list of neighbours
@@ -218,6 +195,7 @@ def buildGraph(fasta_file, swarm_file, data_file):
     print "Time for inserting nodes:", time.clock()-tim2
 
     print "Time:", time.clock()-tim
+    print "\nNetwork size:", len(G)
 
     return G
 
@@ -371,18 +349,35 @@ def findBelongingRoot(G, possibleCuts):
     print "Time:", time.clock()-tim
 
 
-def rewireNode(G, possibleCuts, threshold):
+def rewireNode(G, possibleCuts, threshold, root=True):
     """
-    "Rewire" nodes connected to a parent with belonging root
-    that has abundance lower than threshold
+    If belonging root is below threshold, rewire node from breaking
+    point's belonging root or from breaking point. Performs
+    breadth-first search (BFS) from starting point to find new
+    belonging root. Testing which version is better - rewire from root
+    seems most promising.
     """
     print "\nRewiring nodes"
     tim = time.clock()
 
-    for edge in possibleCuts:
-        for node in edge:
+    for possibleCut in possibleCuts:
+        for node in possibleCut:
             if G[G[node].belongingRoot].abundance < threshold:
-                rewire(G, node, threshold)
+                newParent = -1
+                belongingRootAbundance = 0
+                starting_point = G[node].belongingRoot if root else node
+                queue = deque([starting_point])
+                while newParent < 0:
+                    for neighbour in G[queue.popleft()].neighbours:
+                        curAbundance = G[G[neighbour].belongingRoot].abundance
+                        if curAbundance > threshold \
+                                and curAbundance > belongingRootAbundance:
+                            newParent = neighbour
+                            belongingRootAbundance = curAbundance
+                        else:
+                            queue.append(neighbour)
+                # G[node].parent = newParent
+                G[node].belongingRoot = G[newParent].belongingRoot
     print "Time:", time.clock()-tim
 
 
