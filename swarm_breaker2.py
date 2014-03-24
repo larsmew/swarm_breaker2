@@ -107,6 +107,9 @@ def option_parse():
 
 
 def find_path(graph, start, end, path=[]):
+    """
+    Find the shortest path between two nodes
+    """
     path = path + [start]
     if start == end:
         return path
@@ -118,12 +121,13 @@ def find_path(graph, start, end, path=[]):
     return None
 
 
-### Two versions for rewire nodes' belonging root, if under treshold.
+### Two versions for rewire node's belonging root, if under treshold.
 ### Testing which is better - rewireFromRoot seems most promising.
 def rewireFromNode(G, node, threshold):
     """
-    Rewire node from breaking point, if belonging root is below threshold.
-    i.e. performs BFS from breaking point to find new belonging root.
+    Rewire node from breaking point if belonging root is below
+    threshold. Performs breadth-first search (BFS) from breaking point
+    to find new belonging root.
     """
     newParent = -1
     belongingRootAbundance = 0
@@ -132,20 +136,21 @@ def rewireFromNode(G, node, threshold):
         for neighbour in G[queue.popleft()].neighbours:
             curAbundance = G[G[neighbour].belongingRoot].abundance
             if curAbundance > threshold \
-               and curAbundance > belongingRootAbundance:
+                    and curAbundance > belongingRootAbundance:
                 newParent = neighbour
                 belongingRootAbundance = curAbundance
             else:
                 queue.append(neighbour)
-    #G[node].parent = newParent
+    # G[node].parent = newParent
     G[node].belongingRoot = G[newParent].belongingRoot
+    return None
 
 
 def rewireFromRoot(G, node, threshold):
     """
-    Rewire node (at break point) from belonging root,
-    if belonging root is below threshold.
-    i.e. performs BFS from belonging root to find new belonging root.
+    Rewire node from breaking point's belonging root if belonging root
+    is below threshold. Performs breadth-first search (BFS) from
+    belonging root to find new belonging root.
     """
     newParent = -1
     belongingRootAbundance = 0
@@ -154,13 +159,14 @@ def rewireFromRoot(G, node, threshold):
         for neighbour in G[queue.popleft()].neighbours:
             curAbundance = G[G[neighbour].belongingRoot].abundance
             if curAbundance > threshold \
-               and curAbundance > belongingRootAbundance:
+                    and curAbundance > belongingRootAbundance:
                 newParent = neighbour
                 belongingRootAbundance = curAbundance
             else:
                 queue.append(neighbour)
-    #G[node].parent = newParent
+    # G[node].parent = newParent
     G[node].belongingRoot = G[newParent].belongingRoot
+    return None
 
 
 def outputSwarmFile(G, new_swarms, swarm_file):
