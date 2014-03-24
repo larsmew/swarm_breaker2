@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#from __future__ import print_function as print2
+from __future__ import print_function as print2
 
 __author__ = "Lars Andersen <larsmew@gmail.com>"
 __date__ = "24/03/2014"
@@ -139,7 +139,7 @@ def outputSwarmFile(G, new_swarms, swarm_file):
             f.write("\n")
     f.close()
 
-    print "Time used to make output files:", time.clock()-tim
+    print("Time used to make output files:", time.clock()-tim)
     return None
 
 
@@ -148,11 +148,12 @@ def outputSwarmFile(G, new_swarms, swarm_file):
 #                                  Initializer                                #
 #                                                                             #
 #*****************************************************************************#
+
 def buildGraph(fasta_file, swarm_file, data_file):
     """
     Set up data structure (graph)
     """
-    print "Building data structure"
+    print("Building data structure")
     tim = time.clock()
 
     tim2 = time.clock()
@@ -162,12 +163,12 @@ def buildGraph(fasta_file, swarm_file, data_file):
                          for amplicon in line.strip().split(" ")]
 
     amplicon_index = {amplicon[0]: i for (i, amplicon) in enumerate(amplicons)}
-    print "Time for reading swarm file:", time.clock()-tim2
+    print("Time for reading swarm file:", time.clock()-tim2)
 
     tim2 = time.clock()
     # Initialize graph structure
     G = [create_node() for _ in range(len(amplicon_index))]
-    print "Time for creating graph:", time.clock()-tim2
+    print("Time for creating graph:", time.clock()-tim2)
 
     tim2 = time.clock()
     # Insert name and abundance of each node in the graph
@@ -175,7 +176,7 @@ def buildGraph(fasta_file, swarm_file, data_file):
         G[i].name = amplicons[i][0]  # The nodes hashed name
         G[i].abundance = int(amplicons[i][1])  # the node's abundance
         G[i].num = i  # ID in graph
-    print "Time for inserting name, abundance, id:", time.clock()-tim2
+    print("Time for inserting name, abundance, id:", time.clock()-tim2)
 
     tim2 = time.clock()
     if data_file:
@@ -190,12 +191,12 @@ def buildGraph(fasta_file, swarm_file, data_file):
     #elif fasta_file:
         ### CODE FOR FASTA FILE HERE ###
     else:
-        print "ERROR: NO DATA FILE OR FASTA FILE GIVEN"
+        print("ERROR: NO DATA FILE OR FASTA FILE GIVEN")
         sys.exit(0)
-    print "Time for inserting nodes:", time.clock()-tim2
+    print("Time for inserting nodes:", time.clock()-tim2)
 
-    print "Time:", time.clock()-tim
-    print "\nNetwork size:", len(G)
+    print("Time:", time.clock()-tim)
+    print("\nNetwork size:", len(G))
 
     return G
 
@@ -205,14 +206,14 @@ def buildGraph(fasta_file, swarm_file, data_file):
 #                               Pretty printers                               #
 #                                                                             #
 #*****************************************************************************#
+
 def manualCutter(G, possibleCuts):
-    print
-    print "ENTER MANUAL CUTTING MODE:"
-    print "Instructions: To perform cut press y (yes) or enter, ",
-    print "to keep edge press n (no)"
-    print "Possible cuts:"
-    print "[Cand for cut]    [Cand abundance]    ",
-    print "[Closest root]    [Roots abundance]"
+    print("\nENTER MANUAL CUTTING MODE:")
+    print("Instructions: To perform cut press y (yes) or enter,",end=" ")
+    print("to keep edge press n (no)")
+    print("Possible cuts:")
+    print("[Cand for cut]    [Cand abundance]    ",end="")
+    print("[Closest root]    [Roots abundance]")
     space1 = 18
     space2 = 20
     space3 = 18
@@ -223,10 +224,10 @@ def manualCutter(G, possibleCuts):
             len2 = space1-len(str([G[node].num for node in edge]))
             len3 = space2-len(str([G[node].abundance for node in edge]))-4
             len4 = space3-len(str([G[node].belongingRoot for node in edge]))-1
-            print " ", [G[node].num for node in edge], " " * len2, \
+            print(" ", [G[node].num for node in edge], " " * len2, \
                 [G[node].abundance for node in edge], " " * len3, \
                 [G[node].belongingRoot for node in edge], " " * len4, \
-                [G[G[node].belongingRoot].abundance for node in edge],
+                [G[G[node].belongingRoot].abundance for node in edge],end=" ")
             answer = raw_input("cut? ")
             if not answer == "n" or answer == "no" or answer == "nn":
                 finalCuts.append(edge)
@@ -237,8 +238,8 @@ def prettyPrintCuts(G, finalCuts, tim):
     """
     A bad trial to give a nice output of the cuts.
     """
-    print "[Cand for cut]    [Cand abundance]    ",
-    print "[Closest root]    [Roots abundance]"
+    print("[Cand for cut]    [Cand abundance]    ",end=" ")
+    print("[Closest root]    [Roots abundance]")
     space1 = 18
     space2 = 20
     space3 = 18
@@ -246,13 +247,13 @@ def prettyPrintCuts(G, finalCuts, tim):
         len2 = space1-len(str([G[node].num for node in edge]))
         len3 = space2-len(str([G[node].abundance for node in edge]))-4
         len4 = space3-len(str([G[node].belongingRoot for node in edge]))-1
-        print " ", [G[node].num for node in edge], " " * len2, \
+        print(" ", [G[node].num for node in edge], " " * len2, \
             [G[node].abundance for node in edge], " " * len3, \
             [G[node].belongingRoot for node in edge], " " * len4, \
-            [G[G[node].belongingRoot].abundance for node in edge]
+            [G[G[node].belongingRoot].abundance for node in edge])
         #print [G[node].name for node in edge]
-    print "Number of final cuts:", len(finalCuts)
-    print "Time:", tim, "\n"
+    print("Number of final cuts:", len(finalCuts))
+    print("Time:", tim, "\n")
 
 
 #*****************************************************************************#
@@ -260,11 +261,12 @@ def prettyPrintCuts(G, finalCuts, tim):
 #                            Tools for break swarm                            #
 #                                                                             #
 #*****************************************************************************#
+
 def assignParent(G, threshold):
     """
     Assign biggest neighbour as parent for each node in graph
     """
-    print "\nAssigning parents"
+    print("\nAssigning parents")
     tim = time.clock()
 
     for node in G:
@@ -290,7 +292,7 @@ def assignParent(G, threshold):
                 node.parent = -2  # Has no parent
                 node.belongingRoot = node.num
 
-    print "Time:", time.clock()-tim
+    print("Time:", time.clock()-tim)
 
     # Find name of node - Test purpose
     # if node.abundance == 2708:
@@ -304,7 +306,7 @@ def findPossibleCuts(G):
     Find possible cuts by finding edges where no nodes is
     pointing from or to it.
     """
-    print "\nFinding possible cuts...",
+    print("\nFinding possible cuts...",end="")
     tim = time.clock()
 
     possibleCuts = []
@@ -315,10 +317,10 @@ def findPossibleCuts(G):
                    G[neighbour].parent != node.num:
                     possibleCuts.append((node.num, neighbour))
     #print "Possible cuts:\n",possibleCuts
-    print "found", len(possibleCuts), "possible cuts"
+    print("found", len(possibleCuts), "possible cuts")
     #prettyPrintCuts(G,possibleCuts,tim)
 
-    print "Time:", time.clock() - tim
+    print("Time:", time.clock() - tim)
     return possibleCuts
 
 
@@ -326,7 +328,7 @@ def findBelongingRoot(G, possibleCuts):
     """
     Find corresponding root for each node in possible cuts
     """
-    print "\nFinding belonging roots"
+    print("\nFinding belonging roots")
     tim = time.clock()
 
     for edge in possibleCuts:
@@ -346,7 +348,7 @@ def findBelongingRoot(G, possibleCuts):
                 #    G[n].belongingRoot = G[currentNode.parent].belongingRoot
                 G[node].belongingRoot = G[currentNode.parent].belongingRoot
 
-    print "Time:", time.clock()-tim
+    print("Time:", time.clock()-tim)
 
 
 def rewireNode(G, possibleCuts, threshold, root=True):
@@ -357,7 +359,7 @@ def rewireNode(G, possibleCuts, threshold, root=True):
     belonging root. Testing which version is better - rewire from root
     seems most promising.
     """
-    print "\nRewiring nodes"
+    print("\nRewiring nodes")
     tim = time.clock()
 
     for possibleCut in possibleCuts:
@@ -378,7 +380,7 @@ def rewireNode(G, possibleCuts, threshold, root=True):
                             queue.append(neighbour)
                 # G[node].parent = newParent
                 G[node].belongingRoot = G[newParent].belongingRoot
-    print "Time:", time.clock()-tim
+    print("Time:", time.clock()-tim)
 
 
 def findFinalCuts(G, possibleCuts, threshold, manualCut, parameters):
@@ -386,7 +388,7 @@ def findFinalCuts(G, possibleCuts, threshold, manualCut, parameters):
     Find final cuts, either by manually deciding the cuts or by
     using a parameter, or only using the threshold as tiebreaker.
     """
-    print "\nFinding final cuts:"
+    print("\nFinding final cuts:")
     ### Measure time ###
     tim = time.clock()
 
@@ -436,9 +438,9 @@ def updateDataStructure(G, finalCuts):
                 G[node].seed = True
         G[edge[0]].neighbours.remove(edge[1])
         G[edge[1]].neighbours.remove(edge[0])
-    print "Updating final cuts in data structure:", time.clock()-tim
+    print("Updating final cuts in data structure:", time.clock()-tim)
     #print "Seeds:\n", new_swarm_seeds
-    print "Number of possible seeds:", len(new_swarm_seeds), "\n"
+    print("Number of possible seeds:", len(new_swarm_seeds), "\n")
 
     return new_swarm_seeds
 
@@ -448,6 +450,7 @@ def updateDataStructure(G, finalCuts):
 #                                 Break swarm                                 #
 #                                                                             #
 #*****************************************************************************#
+
 def breakSwarm(G, threshold, manualCut, parameters):
     """
     Compute final cuts in the graph.
@@ -502,7 +505,7 @@ def breakSwarm(G, threshold, manualCut, parameters):
 
 def findNewSwarms(G, seeds):
     ### Performing BFS to find new swarms ###
-    print "Performing BFS to discover new swarms..."
+    print("Performing BFS to discover new swarms...")
     tim = time.clock()
     new_swarms = []
     count = 0
@@ -523,11 +526,11 @@ def findNewSwarms(G, seeds):
 
             new_swarm.sort(key=itemgetter(1), reverse=True)
             new_swarms.append(new_swarm)
-    print "Visited nodes:", count
-    print "BFS time:", time.clock()-tim
-    print "Num swarms:", len(new_swarms)
+    print("Visited nodes:", count)
+    print("BFS time:", time.clock()-tim)
+    print("Num swarms:", len(new_swarms))
     if count != len(G):
-        print "ERROR: DATA LOST AFTER CUTTING."
+        print("ERROR: DATA LOST AFTER CUTTING.")
     return new_swarms
 
 
@@ -556,7 +559,7 @@ def main():
     ### Output new swarm file ###
     outputSwarmFile(G, new_swarms, swarm_file)
 
-    print "Total time used:", time.clock() - totim
+    print("Total time used:", time.clock() - totim)
 
 
 if __name__ == '__main__':
