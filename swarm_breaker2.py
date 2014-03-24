@@ -256,7 +256,6 @@ def prettyPrintCuts(G, finalCuts, tim):
     """
     A bad trial to give a nice output of the cuts.
     """
-    print "\nFinal cuts:"
     print "[Cand for cut]    [Cand abundance]    ",
     print "[Closest root]    [Roots abundance]"
     space1 = 18
@@ -284,6 +283,9 @@ def assignParent(G, threshold):
     """
     Assign biggest neighbour as parent for each node in graph
     """
+    print "\nAssigning parents"
+    tim = time.clock()
+
     for node in G:
         # If node is a leaf, set only neighbour as parent if node is small
         if len(node.neighbours) == 1 and node.abundance < threshold:
@@ -307,6 +309,8 @@ def assignParent(G, threshold):
                 node.parent = -2  # Has no parent
                 node.belongingRoot = node.num
 
+    print "Time:", time.clock()-tim
+
     # Find name of node - Test purpose
     # if node.abundance == 2708:
     #     print "1:",node.num
@@ -319,6 +323,7 @@ def findPossibleCuts(G):
     Find possible cuts by finding edges where no nodes is
     pointing from or to it.
     """
+    print "\nFinding possible cuts...",
     tim = time.clock()
 
     possibleCuts = []
@@ -329,7 +334,7 @@ def findPossibleCuts(G):
                    G[neighbour].parent != node.num:
                     possibleCuts.append((node.num, neighbour))
     #print "Possible cuts:\n",possibleCuts
-    print "\nNumber of possible cuts:", len(possibleCuts)
+    print "found", len(possibleCuts), "possible cuts"
     #prettyPrintCuts(G,possibleCuts,tim)
 
     print "Time:", time.clock() - tim
@@ -340,6 +345,9 @@ def findBelongingRoot(G, possibleCuts):
     """
     Find corresponding root for each node in possible cuts
     """
+    print "\nFinding belonging roots"
+    tim = time.clock()
+
     for edge in possibleCuts:
         for node in edge:
             if G[node].belongingRoot == -1:
@@ -357,24 +365,34 @@ def findBelongingRoot(G, possibleCuts):
                 #    G[n].belongingRoot = G[currentNode.parent].belongingRoot
                 G[node].belongingRoot = G[currentNode.parent].belongingRoot
 
+    print "Time:", time.clock()-tim
+
 
 def rewireNode(G, possibleCuts, threshold):
     """
     "Rewire" nodes connected to a parent with belonging root
     that has abundance lower than threshold
     """
+    print "\nRewiring nodes"
+    tim = time.clock()
+
     for edge in possibleCuts:
         for node in edge:
             if G[G[node].belongingRoot].abundance < threshold:
                 #rewireFromNode(G, node, threshold)
                 rewireFromRoot(G, node, threshold)
+    print "Time:", time.clock()-tim
 
 
-def findFinalCuts(G, possibleCuts, threshold, tim, manualCut):
+def findFinalCuts(G, possibleCuts, threshold, manualCut):
     """
     Find final cuts, either by manually deciding the cuts or by
     using a parameter, or only using the threshold as tiebreaker.
     """
+    print "\nFinding final cuts:"
+    ### Measure time ###
+    tim = time.clock()
+    
     finalCuts = []
     # If manual cut on, the user gets to decide which edges will be cut.
     if manualCut:
@@ -423,7 +441,7 @@ def updateDataStructure(G, finalCuts):
         G[edge[1]].neighbours.remove(edge[0])
     print "Updating final cuts in data structure:", time.clock()-tim
     #print "Seeds:\n", new_swarm_seeds
-    print "Num possible seeds:", len(new_swarm_seeds), "\n"
+    print "Number of possible seeds:", len(new_swarm_seeds), "\n"
 
     return new_swarm_seeds
 
@@ -437,9 +455,6 @@ def breakSwarm(G, threshold, manualCut):
     """
     Compute final cuts in the graph.
     """
-    ### Measure time ###
-    tim = time.clock()
-
     ### Set THRESHOLD value ###
     # Default: Ignore roots below 100.
     # if threshold >= 1, then we ignore roots below threshold,
@@ -459,7 +474,7 @@ def breakSwarm(G, threshold, manualCut):
     rewireNode(G, possibleCuts, threshold)
 
     ### find final cuts: manually, parameter, or only by threshold ###
-    finalCuts = findFinalCuts(G, possibleCuts, threshold, tim, manualCut)
+    finalCuts = findFinalCuts(G, possibleCuts, threshold, manualCut)
 
     # For testing - to see paths
     # print "Path:"
