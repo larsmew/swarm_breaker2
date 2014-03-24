@@ -19,7 +19,11 @@ import os
 #                                Data structure                               #
 #                                                                             #
 #*****************************************************************************#
-class Adjacency_list(object):
+
+class Node(object):
+    """
+    Define the data structure of a node and its direct neighbours
+    """
     neighbours = []
     parent = -1
     name = ''
@@ -30,13 +34,16 @@ class Adjacency_list(object):
     seed = False
 
     # Initializer
-    def __init__(self, neighbours):
-        self.neighbours = neighbours
+    def __init__(self):
+        self.neighbours = []
 
 
-def make_adjlist(neighbours):
-    adjacency_list = Adjacency_list(neighbours)
-    return adjacency_list
+def create_node():
+    """
+    Create node objects
+    """
+    node = Node()
+    return node
 
 
 #*****************************************************************************#
@@ -44,6 +51,7 @@ def make_adjlist(neighbours):
 #                                   Helpers                                   #
 #                                                                             #
 #*****************************************************************************#
+
 def option_parse():
     """
     Parse arguments from command line.
@@ -194,7 +202,7 @@ def buildGraph(fasta_file, swarm_file, data_file):
     #abundance = [abund[1] for abund in amplicons]
 
     # Initialize graph structure
-    G = [make_adjlist([]) for i in range(len(amplicon_index))]
+    G = [create_node() for i in range(len(amplicon_index))]
     print "Network size:", len(G)
 
     # Insert name and abundance for each node
@@ -575,3 +583,36 @@ if __name__ == '__main__':
 Run example:
 python breakOTUs.py -d file.data -s file.swarm
 """
+
+# python swarm_breaker2.py -s ./examples/OTU_006_b970fcbdd71ad2a333f702c7ecfe7114.swarm -d ./examples/OTU_006_b970fcbdd71ad2a333f702c7ecfe7114.data
+# Building data structure
+# Network size: 2480
+# Time: 0.013227
+
+# Assigning parents
+# Time: 0.000986
+
+# Finding possible cuts... found 13 possible cuts
+# Time: 0.001195
+
+# Finding belonging roots
+# Time: 3.3e-05
+
+# Rewiring nodes
+# Time: 5.6e-05
+
+# Finding final cuts:
+# [Cand for cut]    [Cand abundance]     [Closest root]    [Roots abundance]
+#   [1994, 2171]        [9, 2]            [2169, 2280]       [354, 311]
+# Number of final cuts: 1
+# Time: 1.4e-05 
+
+# Updating final cuts in data structure: 6e-06
+# Number of possible seeds: 3 
+
+# Performing BFS to discover new swarms...
+# Visited nodes: 2480
+# BFS time: 0.003767
+# Num swarms: 2
+# Time used to make output files: 0.003382
+# Total time used: 0.023511
