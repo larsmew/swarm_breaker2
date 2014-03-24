@@ -392,7 +392,7 @@ def findFinalCuts(G, possibleCuts, threshold, manualCut):
     print "\nFinding final cuts:"
     ### Measure time ###
     tim = time.clock()
-    
+
     finalCuts = []
     # If manual cut on, the user gets to decide which edges will be cut.
     if manualCut:
