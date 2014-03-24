@@ -121,40 +121,18 @@ def find_path(graph, start, end, path=[]):
     return None
 
 
-### Two versions for rewire node's belonging root, if under treshold.
-### Testing which is better - rewireFromRoot seems most promising.
-def rewireFromNode(G, node, threshold):
+def rewire(G, node, threshold, root=True):
     """
-    Rewire node from breaking point if belonging root is below
-    threshold. Performs breadth-first search (BFS) from breaking point
-    to find new belonging root.
-    """
-    newParent = -1
-    belongingRootAbundance = 0
-    queue = deque([node])
-    while newParent < 0:
-        for neighbour in G[queue.popleft()].neighbours:
-            curAbundance = G[G[neighbour].belongingRoot].abundance
-            if curAbundance > threshold \
-                    and curAbundance > belongingRootAbundance:
-                newParent = neighbour
-                belongingRootAbundance = curAbundance
-            else:
-                queue.append(neighbour)
-    # G[node].parent = newParent
-    G[node].belongingRoot = G[newParent].belongingRoot
-    return None
-
-
-def rewireFromRoot(G, node, threshold):
-    """
-    Rewire node from breaking point's belonging root if belonging root
-    is below threshold. Performs breadth-first search (BFS) from
-    belonging root to find new belonging root.
+    If belonging root is below threshold, rewire node from breaking
+    point's belonging root or from breaking point. Performs
+    breadth-first search (BFS) from starting point to find new
+    belonging root. Testing which version is better - rewire from root
+    seems most promising.
     """
     newParent = -1
     belongingRootAbundance = 0
-    queue = deque([G[node].belongingRoot])
+    starting_point = G[node].belongingRoot if root else node
+    queue = deque([starting_point])
     while newParent < 0:
         for neighbour in G[queue.popleft()].neighbours:
             curAbundance = G[G[neighbour].belongingRoot].abundance
@@ -397,8 +375,7 @@ def rewireNode(G, possibleCuts, threshold):
     for edge in possibleCuts:
         for node in edge:
             if G[G[node].belongingRoot].abundance < threshold:
-                #rewireFromNode(G, node, threshold)
-                rewireFromRoot(G, node, threshold)
+                rewire(G, node, threshold)
     print "Time:", time.clock()-tim
 
 
