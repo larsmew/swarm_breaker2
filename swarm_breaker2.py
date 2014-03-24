@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# from __future__ import print_function as print2
+#from __future__ import print_function as print2
 
 __author__ = "Lars Andersen <larsmew@gmail.com>"
 __date__ = "24/03/2014"
@@ -140,7 +140,7 @@ def outputSwarmFile(G, new_swarms, swarm_file):
     f.close()
 
     print "Time used to make output files:", time.clock()-tim
-    return
+    return None
 
 
 #*****************************************************************************#
@@ -471,7 +471,8 @@ def breakSwarm(G, threshold, manualCut, parameters):
     rewireNode(G, possibleCuts, threshold)
 
     ### find final cuts: manually, parameter, or only by threshold ###
-    finalCuts = findFinalCuts(G, possibleCuts, threshold, manualCut, parameters)
+    finalCuts = findFinalCuts(G, possibleCuts, threshold,
+                              manualCut, parameters)
 
     # For testing - to see paths
     # print "Path:"
@@ -540,7 +541,8 @@ def main():
     totim = time.clock()
 
     ### Parse command line options ###
-    fasta_file, swarm_file, data_file, threshold, manualCut, parameters = option_parse()
+    fasta_file, swarm_file, data_file, threshold, manualCut, \
+        parameters = option_parse()
 
     ### Build data structure ###
     G = buildGraph(fasta_file, swarm_file, data_file)
@@ -569,7 +571,9 @@ Run example:
 python breakOTUs.py -d file.data -s file.swarm
 """
 
-# python swarm_breaker2.py -s ./examples/OTU_006_b970fcbdd71ad2a333f702c7ecfe7114.swarm -d ./examples/OTU_006_b970fcbdd71ad2a333f702c7ecfe7114.data
+# python swarm_breaker2.py
+# -s ./examples/OTU_006_b970fcbdd71ad2a333f702c7ecfe7114.swarm
+# -d ./examples/OTU_006_b970fcbdd71ad2a333f702c7ecfe7114.data
 # Building data structure
 # Network size: 2480
 # Time: 0.013227
@@ -590,10 +594,10 @@ python breakOTUs.py -d file.data -s file.swarm
 # [Cand for cut]    [Cand abundance]     [Closest root]    [Roots abundance]
 #   [1994, 2171]        [9, 2]            [2169, 2280]       [354, 311]
 # Number of final cuts: 1
-# Time: 1.4e-05 
+# Time: 1.4e-05
 
 # Updating final cuts in data structure: 6e-06
-# Number of possible seeds: 3 
+# Number of possible seeds: 3
 
 # Performing BFS to discover new swarms...
 # Visited nodes: 2480
