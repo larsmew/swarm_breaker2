@@ -127,7 +127,6 @@ def outputSwarmFile(G, new_swarms, swarm_file):
     """
     Output new swarm file
     """
-
     tim = time.clock()
 
     output_file_swarm = os.path.splitext(swarm_file)[0] + "_new.swarm"
@@ -157,12 +156,19 @@ def buildGraph(fasta_file, swarm_file, data_file):
     tim = time.clock()
 
     tim2 = time.clock()
-    with open(swarm_file, "rU") as swarm_file:
-        for line in swarm_file:
-            amplicons = [(amplicon.split("_")[0], int(amplicon.split("_")[1]))
-                         for amplicon in line.strip().split(" ")]
+    ### Read amplicons from swarm file ###
+    if swarm_file:
+        with open(swarm_file, "rU") as swarm_file:
+            for line in swarm_file:
+                amplicons = [(amplicon.split("_")[0], 
+                    int(amplicon.split("_")[1])) for 
+                    amplicon in line.strip().split(" ")]
 
-    amplicon_index = {amplicon[0]: i for (i, amplicon) in enumerate(amplicons)}
+        amplicon_index = {amplicon[0]: i for (i, amplicon) 
+            in enumerate(amplicons)}
+    else:
+        print("ERROR: NO SWARM FILE GIVEN")
+        sys.exit(0)
     print("Time for reading swarm file:", time.clock()-tim2)
 
     tim2 = time.clock()
@@ -208,6 +214,9 @@ def buildGraph(fasta_file, swarm_file, data_file):
 #*****************************************************************************#
 
 def manualCutter(G, possibleCuts):
+    """
+    Manual cutting mode
+    """
     print("\nENTER MANUAL CUTTING MODE:")
     print("Instructions: To perform cut press y (yes) or enter,",end=" ")
     print("to keep edge press n (no)")
@@ -504,7 +513,9 @@ def breakSwarm(G, threshold, manualCut, parameters):
 
 
 def findNewSwarms(G, seeds):
-    ### Performing BFS to find new swarms ###
+    """
+    Performing breadth-first search (BFS) from seeds to find new swarms
+    """
     print("Performing BFS to discover new swarms...")
     tim = time.clock()
     new_swarms = []
@@ -540,7 +551,9 @@ def findNewSwarms(G, seeds):
 #                                                                             #
 #*****************************************************************************#
 def main():
-
+    """
+    Main method of the program
+    """
     totim = time.clock()
 
     ### Parse command line options ###
