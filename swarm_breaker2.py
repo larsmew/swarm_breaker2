@@ -181,22 +181,26 @@ def buildGraph(fasta_file, swarm_file, data_file):
     print "Building data structure"
     tim = time.clock()
 
+    tim2 = time.clock()
     with open(swarm_file, "rU") as swarm_file:
         for line in swarm_file:
             amplicons = [(amplicon.split("_")[0], int(amplicon.split("_")[1]))
                          for amplicon in line.strip().split(" ")]
 
     amplicon_index = {amplicon[0]: i for (i, amplicon) in enumerate(amplicons)}
+    print "Time for reading swarm file:", time.clock()-tim2
 
+    tim2 = time.clock()
     # Insert name and abundance of each node in the graph
-    G = []
+    G = [create_node() for _ in range(len(amplicon_index))]
     for i in range(len(amplicon_index)):
-        G.append(create_node())
         G[i].name = amplicons[i][0]  # The nodes hashed name
         G[i].abundance = int(amplicons[i][1])  # the node's abundance
         G[i].num = i  # ID in graph
     print "Network size:", len(G)
-
+    print "Time for creating graph and insertion:", time.clock()-tim2
+    
+    tim2 = time.clock()
     if data_file:
         # Create list of neighbours
         with open(data_file, "rU") as data_file:
@@ -211,6 +215,7 @@ def buildGraph(fasta_file, swarm_file, data_file):
     else:
         print "ERROR: NO DATA FILE OR FASTA FILE GIVEN"
         sys.exit(0)
+    print "Time for inserting nodes:", time.clock()-tim2
 
     print "Time:", time.clock()-tim
 
