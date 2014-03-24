@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 __author__ = "Lars Andersen <larsmew@gmail.com>"
-__date__ = "22/03/2014"
+__date__ = "24/03/2014"
 __version__ = "$Revision: 1.0"
 
 from optparse import OptionParser
@@ -12,8 +12,6 @@ from collections import deque
 import sys
 import time
 import os
-
-PARAMETER = True
 
 
 #*****************************************************************************#
@@ -88,10 +86,16 @@ def option_parse():
                       dest="manualCut",
                       help="Activate manual cutting mode.")
 
+    parser.add_option("-p", "--parameters",
+                      default=True,
+                      action="store_false",
+                      dest="parameters",
+                      help="Deactivate the use of parameters.")
+
     (options, args) = parser.parse_args()
 
     return options.fasta_file, options.swarm_file, options.data_file, \
-        options.threshold, options.manualCut
+        options.threshold, options.manualCut, options.parameters
 
 
 def find_path(graph, start, end, path=[]):
@@ -384,7 +388,7 @@ def rewireNode(G, possibleCuts, threshold):
     print "Time:", time.clock()-tim
 
 
-def findFinalCuts(G, possibleCuts, threshold, manualCut):
+def findFinalCuts(G, possibleCuts, threshold, manualCut, parameters):
     """
     Find final cuts, either by manually deciding the cuts or by
     using a parameter, or only using the threshold as tiebreaker.
@@ -403,7 +407,7 @@ def findFinalCuts(G, possibleCuts, threshold, manualCut):
             # Ignore candidates if both belongs to same root.
             if G[edge[0]].belongingRoot != G[edge[1]].belongingRoot:
                 ## TEST PURPOSE ONLY ##
-                if PARAMETER:
+                if parameters:
                     weakSpot = min(G[edge[0]].abundance,
                                    G[edge[1]].abundance)
                     biggestRoot = max(G[G[edge[0]].belongingRoot].abundance,
@@ -451,7 +455,7 @@ def updateDataStructure(G, finalCuts):
 #                                 Break swarm                                 #
 #                                                                             #
 #*****************************************************************************#
-def breakSwarm(G, threshold, manualCut):
+def breakSwarm(G, threshold, manualCut, parameters):
     """
     Compute final cuts in the graph.
     """
@@ -474,7 +478,7 @@ def breakSwarm(G, threshold, manualCut):
     rewireNode(G, possibleCuts, threshold)
 
     ### find final cuts: manually, parameter, or only by threshold ###
-    finalCuts = findFinalCuts(G, possibleCuts, threshold, manualCut)
+    finalCuts = findFinalCuts(G, possibleCuts, threshold, manualCut, parameters)
 
     # For testing - to see paths
     # print "Path:"
@@ -543,13 +547,13 @@ def main():
     totim = time.clock()
 
     ### Parse command line options ###
-    fasta_file, swarm_file, data_file, threshold, manualCut = option_parse()
+    fasta_file, swarm_file, data_file, threshold, manualCut, parameters = option_parse()
 
     ### Build data structure ###
     G = buildGraph(fasta_file, swarm_file, data_file)
 
     ### Compute cuts and break swarm ###
-    new_swarm_seeds = breakSwarm(G, threshold, manualCut)
+    new_swarm_seeds = breakSwarm(G, threshold, manualCut, parameters)
 
     ### Find new swarms ###
     new_swarms = findNewSwarms(G, new_swarm_seeds)
