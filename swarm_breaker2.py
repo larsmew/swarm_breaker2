@@ -14,7 +14,6 @@ from collections import deque
 import sys
 import time
 import os
-import thread
 
 
 #*****************************************************************************#
@@ -163,8 +162,8 @@ def buildGraph(fasta_file, swarm_file, data_file):
         with open(swarm_file, "rU") as swarm_file:
             for line in swarm_file:
                 amplicons += [(amplicon.split("_")[0],
-                             int(amplicon.split("_")[1])) for
-                             amplicon in line.strip().split(" ")]
+                              int(amplicon.split("_")[1])) for
+                              amplicon in line.strip().split(" ")]
 
         amplicon_index = {amplicon[0]: i for (i, amplicon)
                           in enumerate(amplicons)}
@@ -246,7 +245,7 @@ def manualCutter(G, possibleCuts):
     return finalCuts
 
 
-def prettyPrintCuts(G, finalCuts, tim):
+def prettyPrintCuts(G, finalCuts):
     """
     A bad trial to give a nice output of the cuts.
     """
@@ -264,8 +263,6 @@ def prettyPrintCuts(G, finalCuts, tim):
               [G[node].belongingRoot for node in edge], " " * len4,
               [G[G[node].belongingRoot].abundance for node in edge])
         #print [G[node].name for node in edge]
-    print("Number of final cuts:", len(finalCuts))
-    print("Time:", tim, "\n")
 
 
 #*****************************************************************************#
@@ -285,11 +282,6 @@ def assignParent(G, threshold):
         # If node is a leaf, set only neighbour as parent if node is small
         if len(node.neighbours) == 1 and node.abundance < threshold:
             node.parent = node.neighbours[0]
-        # If node is the biggest in graph, ignore it
-        # elif node.num == 0:
-        #     node.parent = -2
-        #     node.belongingRoot = node.num
-        #     node.seed = True
         # Choose neighbour with highest abundance as parent
         else:
             biggestNeighbour = -1
@@ -300,6 +292,7 @@ def assignParent(G, threshold):
                     biggestNeighbourAbundance = G[neighbour].abundance
             if biggestNeighbourAbundance >= node.abundance:
                 node.parent = biggestNeighbour
+            # else if no neighbour with degree higher than itself, set as root
             else:
                 node.parent = -2  # Has no parent
                 node.belongingRoot = node.num
@@ -345,7 +338,7 @@ def findBelongingRoot(G, possibleCuts):
 
     for edge in possibleCuts:
         for node in edge:
-            if G[node].belongingRoot == -1:
+            if G[node].belongingRoot == -1:  # If -2 then already root
                 currentNode = G[node]
                 #path = [node]
                 while G[currentNode.parent].belongingRoot == -1:
@@ -428,10 +421,11 @@ def findFinalCuts(G, possibleCuts, threshold, manualCut, parameters):
                 else:
                     finalCuts.append(edge)
 
-    ### Print Final Cuts ###
-    if finalCuts:
-        tim = time.clock() - tim
-        prettyPrintCuts(G, finalCuts, tim)
+    ### Print Final Cuts - if not too many ###
+    if finalCuts and len(finalCuts) < 100:
+        prettyPrintCuts(G, finalCuts)
+    print("Number of final cuts:", len(finalCuts))
+    print("Time:", time.clock() - tim, "\n")
 
     return finalCuts
 
