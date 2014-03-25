@@ -14,6 +14,7 @@ from collections import deque
 import sys
 import time
 import os
+import thread
 
 
 #*****************************************************************************#
@@ -285,10 +286,10 @@ def assignParent(G, threshold):
         if len(node.neighbours) == 1 and node.abundance < threshold:
             node.parent = node.neighbours[0]
         # If node is the biggest in graph, ignore it
-        elif node.num == 0:
-            node.parent = -2
-            node.belongingRoot = node.num
-            node.seed = True
+        # elif node.num == 0:
+        #     node.parent = -2
+        #     node.belongingRoot = node.num
+        #     node.seed = True
         # Choose neighbour with highest abundance as parent
         else:
             biggestNeighbour = -1
