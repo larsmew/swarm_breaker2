@@ -129,7 +129,7 @@ def outputSwarmFile(G, new_swarms, swarm_file):
     """
     tim = time.clock()
 
-    output_file_swarm = os.path.splitext(swarm_file)[0] + "_new.swarm"
+    output_file_swarm = os.path.splitext(swarm_file)[0] + "_new.swarms"
     with open(output_file_swarm, 'w') as f:
         for swarm in new_swarms:
             for node in swarm:
@@ -157,15 +157,16 @@ def buildGraph(fasta_file, swarm_file, data_file):
 
     tim2 = time.clock()
     ### Read amplicons from swarm file ###
+    amplicons = []
     if swarm_file:
         with open(swarm_file, "rU") as swarm_file:
             for line in swarm_file:
-                amplicons = [(amplicon.split("_")[0], 
-                    int(amplicon.split("_")[1])) for 
-                    amplicon in line.strip().split(" ")]
+                amplicons += [(amplicon.split("_")[0],
+                             int(amplicon.split("_")[1])) for
+                             amplicon in line.strip().split(" ")]
 
-        amplicon_index = {amplicon[0]: i for (i, amplicon) 
-            in enumerate(amplicons)}
+        amplicon_index = {amplicon[0]: i for (i, amplicon)
+                          in enumerate(amplicons)}
     else:
         print("ERROR: NO SWARM FILE GIVEN")
         sys.exit(0)
@@ -218,10 +219,10 @@ def manualCutter(G, possibleCuts):
     Manual cutting mode
     """
     print("\nENTER MANUAL CUTTING MODE:")
-    print("Instructions: To perform cut press y (yes) or enter,",end=" ")
+    print("Instructions: To perform cut press y (yes) or enter,", end=" ")
     print("to keep edge press n (no)")
     print("Possible cuts:")
-    print("[Cand for cut]    [Cand abundance]    ",end="")
+    print("[Cand for cut]    [Cand abundance]    ", end="")
     print("[Closest root]    [Roots abundance]")
     space1 = 18
     space2 = 20
@@ -233,10 +234,11 @@ def manualCutter(G, possibleCuts):
             len2 = space1-len(str([G[node].num for node in edge]))
             len3 = space2-len(str([G[node].abundance for node in edge]))-4
             len4 = space3-len(str([G[node].belongingRoot for node in edge]))-1
-            print(" ", [G[node].num for node in edge], " " * len2, \
-                [G[node].abundance for node in edge], " " * len3, \
-                [G[node].belongingRoot for node in edge], " " * len4, \
-                [G[G[node].belongingRoot].abundance for node in edge],end=" ")
+            print(" ", [G[node].num for node in edge], " " * len2,
+                  [G[node].abundance for node in edge], " " * len3,
+                  [G[node].belongingRoot for node in edge], " " * len4,
+                  [G[G[node].belongingRoot].abundance for node in edge],
+                  end=" ")
             answer = raw_input("cut? ")
             if not answer == "n" or answer == "no" or answer == "nn":
                 finalCuts.append(edge)
@@ -247,7 +249,7 @@ def prettyPrintCuts(G, finalCuts, tim):
     """
     A bad trial to give a nice output of the cuts.
     """
-    print("[Cand for cut]    [Cand abundance]    ",end=" ")
+    print("[Cand for cut]    [Cand abundance]    ", end=" ")
     print("[Closest root]    [Roots abundance]")
     space1 = 18
     space2 = 20
@@ -256,10 +258,10 @@ def prettyPrintCuts(G, finalCuts, tim):
         len2 = space1-len(str([G[node].num for node in edge]))
         len3 = space2-len(str([G[node].abundance for node in edge]))-4
         len4 = space3-len(str([G[node].belongingRoot for node in edge]))-1
-        print(" ", [G[node].num for node in edge], " " * len2, \
-            [G[node].abundance for node in edge], " " * len3, \
-            [G[node].belongingRoot for node in edge], " " * len4, \
-            [G[G[node].belongingRoot].abundance for node in edge])
+        print(" ", [G[node].num for node in edge], " " * len2,
+              [G[node].abundance for node in edge], " " * len3,
+              [G[node].belongingRoot for node in edge], " " * len4,
+              [G[G[node].belongingRoot].abundance for node in edge])
         #print [G[node].name for node in edge]
     print("Number of final cuts:", len(finalCuts))
     print("Time:", tim, "\n")
@@ -315,7 +317,7 @@ def findPossibleCuts(G):
     Find possible cuts by finding edges where no nodes is
     pointing from or to it.
     """
-    print("\nFinding possible cuts...",end="")
+    print("\nFinding possible cuts...", end="")
     tim = time.clock()
 
     possibleCuts = []
