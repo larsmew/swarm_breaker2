@@ -391,7 +391,7 @@ def rewireNode(G, possibleCuts, threshold, root=True):
 def findFinalCuts(G, possibleCuts, threshold, manualCut, parameters):
     """
     Find final cuts, either by manually deciding the cuts or by
-    using a parameter, or only using the threshold as tiebreaker.
+    using parameters, or only using the threshold as tiebreaker.
     """
     print("\nFinding final cuts:")
     ### Measure time ###
@@ -465,7 +465,7 @@ def breakSwarm(G, threshold, manualCut, parameters):
     # Default: Ignore roots below 100.
     # if threshold >= 1, then we ignore roots below threshold,
     # else we ignore a percentage of the whole network size.
-    threshold = threshold if threshold >= 1 else threshold*len(G)
+    threshold = threshold if threshold >= 1 else threshold * len(G)
 
     ### Assign a parent (biggest neighbour) to each node ###
     assignParent(G, threshold)
@@ -526,13 +526,15 @@ def findNewSwarms(G, seeds):
             while queue:
                 count += 1
                 currentNode = queue.popleft()
-                new_swarm.append((currentNode, G[currentNode].abundance))
+                new_swarm.append((currentNode, G[currentNode].abundance, 
+                                  G[currentNode].name))
                 for node in G[currentNode].neighbours:
                     if not G[node].checked:
                         queue.append(node)
                         G[node].checked = True
-
-            new_swarm.sort(key=itemgetter(1), reverse=True)
+            
+            # Sort amplicons by decreasing abundance and alphabetical order
+            new_swarm.sort(key=itemgetter(1, 2), reverse=True)
             new_swarms.append(new_swarm)
     print("Visited nodes:", count)
     print("BFS time:", time.clock()-tim)
