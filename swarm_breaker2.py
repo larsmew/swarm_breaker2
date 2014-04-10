@@ -371,18 +371,22 @@ def rewireNode(G, possibleCuts, threshold, root=True):
         for node in possibleCut:
             if G[G[node].belongingRoot].abundance < threshold:
                 newParent = -1
+                distance = sys.maxsize
                 belongingRootAbundance = 0
                 starting_point = G[node].belongingRoot if root else node
-                queue = deque([starting_point])
+                queue = deque([(0, starting_point)])
                 while newParent < 0:
-                    for neighbour in G[queue.popleft()].neighbours:
+                    dist, point = queue.popleft()
+                    for neighbour in G[point].neighbours:
                         curAbundance = G[G[neighbour].belongingRoot].abundance
                         if curAbundance > threshold \
-                                and curAbundance > belongingRootAbundance:
+                                and curAbundance > belongingRootAbundance \
+                                and dist <= distance:
                             newParent = neighbour
                             belongingRootAbundance = curAbundance
+                            distance = dist
                         else:
-                            queue.append(neighbour)
+                            queue.append((dist+1,neighbour))
                 # G[node].parent = newParent
                 G[node].belongingRoot = G[newParent].belongingRoot
     print("Time:", time.clock()-tim)
@@ -416,7 +420,7 @@ def findFinalCuts(G, possibleCuts, threshold, manualCut, parameters):
                                        G[G[edge[1]].belongingRoot].abundance)
                     if (smalletsRoot/weakSpot > 25
                         and biggestRoot/smalletsRoot < 10) \
-                            or smalletsRoot / weakSpot > threshold/2:
+                            or smalletsRoot / weakSpot > 50:
                         finalCuts.append(edge)
                 else:
                     finalCuts.append(edge)
