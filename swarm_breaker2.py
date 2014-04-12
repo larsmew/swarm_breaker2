@@ -132,11 +132,8 @@ def outputSwarmFile(G, new_swarms, swarm_file):
     output_file_swarm = os.path.splitext(swarm_file)[0] + "_new.swarms"
     with open(output_file_swarm, 'w') as f:
         for swarm in new_swarms:
-            for node in swarm:
-                # print2(node)
-                f.write(str(G[node[0]].name)+"_"+str(node[1])+" ")
-            f.write("\n")
-    f.close()
+            print(" ".join([str(G[node[0]].name)+"_"+str(node[1])
+                  for node in swarm]), file=f)
 
     print("Time used to make output files:", time.clock()-tim)
     return None
@@ -386,7 +383,7 @@ def rewireNode(G, possibleCuts, threshold, root=True):
                             belongingRootAbundance = curAbundance
                             distance = dist
                         else:
-                            queue.append((dist+1,neighbour))
+                            queue.append((dist+1, neighbour))
                 # G[node].parent = newParent
                 G[node].belongingRoot = G[newParent].belongingRoot
     print("Time:", time.clock()-tim)
@@ -530,13 +527,13 @@ def findNewSwarms(G, seeds):
             while queue:
                 count += 1
                 currentNode = queue.popleft()
-                new_swarm.append((currentNode, G[currentNode].abundance, 
+                new_swarm.append((currentNode, G[currentNode].abundance,
                                   G[currentNode].name))
                 for node in G[currentNode].neighbours:
                     if not G[node].checked:
                         queue.append(node)
                         G[node].checked = True
-            
+
             # Sort amplicons by decreasing abundance and alphabetical order
             new_swarm.sort(key=itemgetter(1, 2), reverse=True)
             new_swarms.append(new_swarm)
