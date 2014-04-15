@@ -97,8 +97,8 @@ def option_parse():
                       help="Activate manual cutting mode.")
 
     parser.add_option("-p", "--parameters",
-                      default=True,
-                      action="store_false",
+                      default=False,
+                      action="store_true",
                       dest="parameters",
                       help="Deactivate the use of parameters.")
 
