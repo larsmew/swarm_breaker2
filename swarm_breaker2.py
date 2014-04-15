@@ -216,27 +216,27 @@ def manualCutter(G, possibleCuts):
     Manual cutting mode
     """
     print("\nENTER MANUAL CUTTING MODE:")
-    print("Instructions: To perform cut press y (yes) or enter,", end=" ")
-    print("to keep edge press n (no)")
+    print("Instructions: To perform cut press y (yes) or enter, "
+          "to keep edge press n (no)")
     print("Possible cuts:")
-    print("[Cand for cut]    [Cand abundance]    ", end="")
-    print("[Closest root]    [Roots abundance]")
-    space1 = 18
-    space2 = 20
-    space3 = 18
     finalCuts = []
     for edge in possibleCuts:
         # Ignore candidates if both belongs to same root.
         if G[edge[0]].belongingRoot != G[edge[1]].belongingRoot:
-            len2 = space1-len(str([G[node].num for node in edge]))
-            len3 = space2-len(str([G[node].abundance for node in edge]))-4
-            len4 = space3-len(str([G[node].belongingRoot for node in edge]))-1
-            print(" ", [G[node].num for node in edge], " " * len2,
-                  [G[node].abundance for node in edge], " " * len3,
-                  [G[node].belongingRoot for node in edge], " " * len4,
-                  [G[G[node].belongingRoot].abundance for node in edge],
-                  end=" ")
-            answer = raw_input("cut? ")
+            print(G[G[edge[0]].belongingRoot].abundance, "\t\t ",
+                  G[G[edge[1]].belongingRoot].abundance)
+            print("    \ \t\t /")
+            print("    ", G[edge[0]].abundance,
+                  "-------", G[edge[1]].abundance)
+            minPeak = min(G[G[edge[0]].belongingRoot].abundance,
+                          G[G[edge[1]].belongingRoot].abundance)
+            maxPeak = max(G[G[edge[0]].belongingRoot].abundance,
+                          G[G[edge[1]].belongingRoot].abundance)
+            weakPoint = min(G[edge[0]].abundance, G[edge[1]].abundance)
+            print("Valley ratio:", float(minPeak)/weakPoint)
+            print("Peak ratio  :", float(maxPeak)/minPeak)
+            answer = raw_input("Make cut between "+str(G[edge[0]].abundance) +
+                               " and "+str(G[edge[1]].abundance)+"? ")
             if not answer == "n" or answer == "no" or answer == "nn":
                 finalCuts.append(edge)
     return finalCuts
