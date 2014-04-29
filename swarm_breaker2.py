@@ -4,13 +4,15 @@
 from __future__ import print_function
 
 __author__ = "Lars Andersen <larsmew@gmail.com>"
-__date__ = "24/03/2014"
-__version__ = "$Revision: 1.0"
+__date__ = "30/04/2014"
+__version__ = "$Revision: 1.2"
 
 from optparse import OptionParser
 from operator import itemgetter
 from collections import deque
 #from igraph import *
+import tempfile
+import subprocess
 import sys
 import time
 import os
@@ -90,6 +92,12 @@ def option_parse():
                       dest="threshold",
                       help="set <VALUE> as threshold.")
 
+    parser.add_option("-b", "--binary_swarm",
+                      metavar="<FILENAME>",
+                      action="store",
+                      dest="swarm_path",
+                      help="path to binary swarm file.")
+
     parser.add_option("-m", "--manual",
                       default=False,
                       action="store_true",
@@ -100,12 +108,13 @@ def option_parse():
                       default=False,
                       action="store_true",
                       dest="parameters",
-                      help="Deactivate the use of parameters.")
+                      help="Activate the use of parameters.")
 
     (options, args) = parser.parse_args()
 
     return options.fasta_file, options.swarm_file, options.data_file, \
-        options.threshold, options.manualCut, options.parameters
+        options.threshold, options.swarm_path, options.manualCut, \
+        options.parameters
 
 
 def find_path(graph, start, end, path=[]):
@@ -145,7 +154,39 @@ def outputSwarmFile(G, new_swarms, swarm_file):
 #                                                                             #
 #*****************************************************************************#
 
-def buildGraph(fasta_file, swarm_file, data_file):
+def obtainGraphData(fasta_file, swarm_path):
+    """
+    Create temporary data from fasta file using swarm.
+    """
+    ### If swarm_path given
+    if swarm_path:
+        if swarm_path[-1] == "/":
+            swarm_path = swarm_path+"swarm"
+        swarm = [swarm_path, "-b", "-d", "1"]
+    ### else assume swarm file in same folder as this script
+    else:
+        swarm = ["./swarm", "-b", "-d", "1"]
+
+    ### Open devnull to discard stdout
+    with open(os.devnull, "w") as devnull:
+        with open(fasta_file, "rU") as fasta_file:
+            with tempfile.SpooledTemporaryFile() as tmp_swarm_results:
+                ### Run Swarm
+                popen = subprocess.Popen(swarm,
+                                         stderr=tmp_swarm_results,
+                                         stdout=devnull,
+                                         stdin=fasta_file,
+                                         close_fds=True)
+                popen.wait()
+                tmp_swarm_results.seek(0)  # rewind to the begining of the file
+                ### Create data for graph
+                graph_data = [line.strip().split("\t")[1:4]
+                              for line in tmp_swarm_results
+                              if line.startswith("@")]
+                return graph_data
+
+
+def buildGraph(fasta_file, swarm_file, data_file, swarm_path):
     """
     Set up data structure (graph)
     """
@@ -192,8 +233,13 @@ def buildGraph(fasta_file, swarm_file, data_file):
                 ampliconB = amplicon_index[ampliconB]
                 G[ampliconA].neighbours.append(ampliconB)
                 G[ampliconB].neighbours.append(ampliconA)
-    #elif fasta_file:
-        ### CODE FOR FASTA FILE HERE ###
+    elif fasta_file:
+        graph_data = obtainGraphData(fasta_file, swarm_path)
+        for amplicons in graph_data:
+            ampliconA = amplicon_index[amplicons[0]]
+            ampliconB = amplicon_index[amplicons[1]]
+            G[ampliconA].neighbours.append(ampliconB)
+            G[ampliconB].neighbours.append(ampliconA)
     else:
         print("ERROR: NO DATA FILE OR FASTA FILE GIVEN")
         sys.exit(0)
@@ -557,11 +603,11 @@ def main():
     totim = time.clock()
 
     ### Parse command line options ###
-    fasta_file, swarm_file, data_file, threshold, manualCut, \
+    fasta_file, swarm_file, data_file, threshold, swarm_path, manualCut, \
         parameters = option_parse()
 
     ### Build data structure ###
-    G = buildGraph(fasta_file, swarm_file, data_file)
+    G = buildGraph(fasta_file, swarm_file, data_file, swarm_path)
 
     ### Compute cuts and break swarm ###
     new_swarm_seeds = breakSwarm(G, threshold, manualCut, parameters)
