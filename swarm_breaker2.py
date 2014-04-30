@@ -132,13 +132,16 @@ def find_path(graph, start, end, path=[]):
     return None
 
 
-def outputSwarmFile(G, new_swarms, swarm_file):
+def outputSwarmFile(G, new_swarms, swarm_file, fasta_file):
     """
     Output new swarm file
     """
     tim = time.clock()
 
-    output_file_swarm = os.path.splitext(swarm_file)[0] + "_new.swarms"
+    if swarm_file:
+        output_file_swarm = os.path.splitext(swarm_file)[0] + "_new.swarms"
+    else:
+        output_file_swarm = os.path.splitext(fasta_file)[0] + "_new.swarms"
     with open(output_file_swarm, 'w') as f:
         for swarm in new_swarms:
             print(" ".join([str(G[node[0]].name)+"_"+str(node[1])
@@ -154,60 +157,20 @@ def outputSwarmFile(G, new_swarms, swarm_file):
 #                                                                             #
 #*****************************************************************************#
 
-def obtainGraphData(fasta_file, swarm_path):
+def initGraph(swarm_file, graph_data, is_data_file):
     """
-    Create temporary data from fasta file using swarm.
+    Initialize the graph structure and insert data
     """
-    ### If swarm_path given
-    if swarm_path:
-        if swarm_path[-1] == "/":
-            swarm_path = swarm_path+"swarm"
-        swarm = [swarm_path, "-b", "-d", "1"]
-    ### else assume swarm file in same folder as this script
-    else:
-        swarm = ["./swarm", "-b", "-d", "1"]
-
-    ### Open devnull to discard stdout
-    with open(os.devnull, "w") as devnull:
-        with open(fasta_file, "rU") as fasta_file:
-            with tempfile.SpooledTemporaryFile() as tmp_swarm_results:
-                ### Run Swarm
-                popen = subprocess.Popen(swarm,
-                                         stderr=tmp_swarm_results,
-                                         stdout=devnull,
-                                         stdin=fasta_file,
-                                         close_fds=True)
-                popen.wait()
-                tmp_swarm_results.seek(0)  # rewind to the begining of the file
-                ### Create data for graph
-                graph_data = [line.strip().split("\t")[1:4]
-                              for line in tmp_swarm_results
-                              if line.startswith("@")]
-                return graph_data
-
-
-def buildGraph(fasta_file, swarm_file, data_file, swarm_path):
-    """
-    Set up data structure (graph)
-    """
-    print("Building data structure")
-    tim = time.clock()
-
     tim2 = time.clock()
     ### Read amplicons from swarm file ###
     amplicons = []
-    if swarm_file:
-        with open(swarm_file, "rU") as swarm_file:
-            for line in swarm_file:
-                amplicons += [(amplicon.split("_")[0],
-                              int(amplicon.split("_")[1])) for
-                              amplicon in line.strip().split(" ")]
+    for line in swarm_file:
+        amplicons += [(amplicon.split("_")[0],
+                      int(amplicon.split("_")[1])) for
+                      amplicon in line.strip().split(" ")]
 
-        amplicon_index = {amplicon[0]: i for (i, amplicon)
-                          in enumerate(amplicons)}
-    else:
-        print("ERROR: NO SWARM FILE GIVEN")
-        sys.exit(0)
+    amplicon_index = {amplicon[0]: i for (i, amplicon)
+                      in enumerate(amplicons)}
     print("Time for reading swarm file:", time.clock()-tim2)
 
     tim2 = time.clock()
@@ -224,26 +187,81 @@ def buildGraph(fasta_file, swarm_file, data_file, swarm_path):
     print("Time for inserting name, abundance, id:", time.clock()-tim2)
 
     tim2 = time.clock()
-    if data_file:
-        # Create list of neighbours
-        with open(data_file, "rU") as data_file:
-            for line in data_file:
-                ampliconA, ampliconB, differences = line.split()
-                ampliconA = amplicon_index[ampliconA]
-                ampliconB = amplicon_index[ampliconB]
-                G[ampliconA].neighbours.append(ampliconB)
-                G[ampliconB].neighbours.append(ampliconA)
-    elif fasta_file:
-        graph_data = obtainGraphData(fasta_file, swarm_path)
-        for amplicons in graph_data:
-            ampliconA = amplicon_index[amplicons[0]]
-            ampliconB = amplicon_index[amplicons[1]]
-            G[ampliconA].neighbours.append(ampliconB)
-            G[ampliconB].neighbours.append(ampliconA)
-    else:
-        print("ERROR: NO DATA FILE OR FASTA FILE GIVEN")
-        sys.exit(0)
+    for line in graph_data:
+        if is_data_file:
+            ampliconA, ampliconB, differences = line.split()
+        else:
+            ampliconA, ampliconB = line[0], line[1]
+        ampliconA = amplicon_index[ampliconA]
+        ampliconB = amplicon_index[ampliconB]
+        G[ampliconA].neighbours.append(ampliconB)
+        G[ampliconB].neighbours.append(ampliconA)
     print("Time for inserting nodes:", time.clock()-tim2)
+
+    return G
+
+
+def buildGraph(fasta_file, swarm_file, data_file, swarm_path):
+    """
+    Set up data structure (graph)
+    """
+    print("Building data structure")
+    tim = time.clock()
+
+    if data_file and swarm_file:
+        """
+        Initilize graph with data from swarm file and data file
+        """
+        with open(swarm_file, "rU") as swarm_file:
+            with open(data_file, "rU") as data_file:
+                G = initGraph(swarm_file, data_file, True)
+    elif fasta_file:
+        """
+        Create temporary data from fasta file using swarm.
+        """
+        ### If swarm_path given
+        if swarm_path:
+            if swarm_path[-1] == "/":
+                swarm_path = swarm_path+"swarm"
+            swarm = [swarm_path, "-b", "-d", "1"]
+        ### else assume swarm file in same folder as this script
+        else:
+            swarm = ["./swarm", "-b", "-d", "1"]
+
+        with open(fasta_file, "rU") as fasta_file:
+            with tempfile.SpooledTemporaryFile() as tmp_swarm_file:
+                with tempfile.SpooledTemporaryFile() as tmp_swarm_results:
+                    ### Run Swarm
+                    try:
+                        tim2 = time.clock()
+                        popen = subprocess.Popen(swarm,
+                                                 stderr=tmp_swarm_results,
+                                                 stdout=tmp_swarm_file,
+                                                 stdin=fasta_file,
+                                                 close_fds=True)
+                        popen.wait()
+                        print("Time for running swarm: ", time.clock()-tim2)
+                    except:
+                        print("ERROR: SWARM PROGRAM NOT FOUND")
+                        print("Either supply fasta file and Swarm",
+                              "program OR supply data file and swarm file.")
+                        sys.exit()
+
+                    tim2 = time.clock()
+                    ### rewind to the begining of the file
+                    tmp_swarm_results.seek(0)
+                    ### Create data for graph
+                    graph_data = [line.strip().split("\t")[1:4]
+                                  for line in tmp_swarm_results
+                                  if line.startswith("@")]
+                    print("Time for extracting data: ", time.clock()-tim2)
+                    ### rewind to the begining of the file
+                    tmp_swarm_file.seek(0)
+                    ### Initialize graph with obtained data
+                    G = initGraph(tmp_swarm_file, graph_data, False)
+    else:
+        print("ERROR: NO DATA AND SWARM FILES OR FASTA FILE GIVEN")
+        sys.exit(0)
 
     print("Time:", time.clock()-tim)
     print("\nNetwork size:", len(G))
@@ -616,7 +634,7 @@ def main():
     new_swarms = findNewSwarms(G, new_swarm_seeds)
 
     ### Output new swarm file ###
-    outputSwarmFile(G, new_swarms, swarm_file)
+    outputSwarmFile(G, new_swarms, swarm_file, fasta_file)
 
     print("Total time used:", time.clock() - totim)
 
