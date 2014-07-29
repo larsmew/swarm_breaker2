@@ -224,6 +224,9 @@ def buildGraph(fasta_file, swarm_file, data_file, swarm_path):
             if swarm_path[-1] == "/":
                 swarm_path = swarm_path+"swarm"
             swarm = [swarm_path, "-b", "-d", "1"]
+        ### else check if swarm binary in /usr/bin
+        elif os.path.isfile("/usr/bin/swarm"):
+            swarm = ["/usr/bin/swarm", "-b", "-d", "1"]
         ### else assume swarm file in same folder as this script
         else:
             swarm = ["./swarm", "-b", "-d", "1"]
@@ -242,9 +245,9 @@ def buildGraph(fasta_file, swarm_file, data_file, swarm_path):
                         popen.wait()
                         print("Time for running swarm: ", time.clock()-tim2)
                     except:
-                        print("ERROR: SWARM PROGRAM NOT FOUND")
+                        print("ERROR: SWARM BINARY NOT FOUND")
                         print("Either supply fasta file and Swarm",
-                              "program OR supply data file and swarm file.")
+                              "binary OR supply data file and swarm file.")
                         sys.exit()
 
                     tim2 = time.clock()
