@@ -165,8 +165,8 @@ def initGraph(swarm_file, graph_data, is_data_file):
     ### Read amplicons from swarm file ###
     amplicons = []
     for line in swarm_file:
-        amplicons += [(amplicon.split("_")[0],
-                      int(amplicon.split("_")[1])) for
+        amplicons += [(amplicon.rsplit("_")[0],
+                      int(amplicon.rsplit("_")[1])) for
                       amplicon in line.strip().split(" ")]
 
     amplicon_index = {amplicon[0]: i for (i, amplicon)
@@ -228,7 +228,7 @@ def buildGraph(fasta_file, swarm_file, data_file, swarm_path):
         elif os.path.isfile("/usr/bin/swarm"):
             swarm = ["/usr/bin/swarm", "-b", "-d", "1"]
         ### else assume swarm file in same folder as this script
-        else:
+        else #elif os.path.isfile("./swarm"):
             swarm = ["./swarm", "-b", "-d", "1"]
 
         with open(fasta_file, "rU") as fasta_file:
@@ -245,7 +245,7 @@ def buildGraph(fasta_file, swarm_file, data_file, swarm_path):
                         popen.wait()
                         print("Time for running swarm: ", time.clock()-tim2)
                     except:
-                        print("ERROR: SWARM BINARY NOT FOUND")
+                        print("ERROR: SWARM BINARY NOT FOUND OR NOT WORKING")
                         print("Either supply fasta file and Swarm",
                               "binary OR supply data file and swarm file.")
                         sys.exit()
