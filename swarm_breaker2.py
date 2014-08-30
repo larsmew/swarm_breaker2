@@ -157,6 +157,117 @@ def outputSwarmFile(G, new_swarms, swarm_file, fasta_file):
 #                                                                             #
 #*****************************************************************************#
 
+def fasta_parse(fasta_file):
+    """
+    List amplicon ids, abundances and sequences, make a list and a dictionary
+    """
+    with open(fasta_file, "rU") as fasta_file:
+        all_amplicons = dict()
+        for line in fasta_file:
+            if line.startswith(">"):
+                amplicon, abundance = line.strip(">\n").rsplit("_", 1)
+            else:
+                sequence = line.strip()
+                all_amplicons[amplicon] = (int(abundance), sequence)
+        return all_amplicons
+
+
+def swarm_parse(swarm_file):
+    """
+    List amplicons contained in each swarms, sort by decreasing
+    abundance. Sort the list of swarms by decreasing mass and
+    decreasing size.
+    """
+    with open(swarm_file, "rU") as swarm_file:
+        swarms = list()
+        for line in swarm_file:
+            amplicons = [(amplicon.rsplit("_", 1)[0], int(amplicon.rsplit("_", 1)[1]))
+                         for amplicon in line.strip().split(" ")]
+            # Sort amplicons by decreasing abundance and alphabetical order
+            amplicons.sort(key=itemgetter(1, 0), reverse=True)
+            top_amplicon, top_abundance = amplicons[0]
+            swarm_size = len(amplicons)
+            swarm_mass = sum([amplicon[1] for amplicon in amplicons])
+            swarms.append([top_amplicon, swarm_mass, swarm_size,
+                           top_abundance, amplicons])
+        # Sort swarms on mass, size and seed name
+        swarms.sort(key=itemgetter(1, 2, 0), reverse=True)
+        return swarms
+
+
+def run_swarm(binary, all_amplicons, swarm, threshold):
+    """
+    Write temporary fasta files, run swarm and collect the graph data
+    """
+    #swarm_command = [binary, "-b", "-d", str(threshold)]
+    swarm_command = [binary, "-b", "-d", "1"]
+    with open(os.devnull, "w") as devnull:
+        with tempfile.SpooledTemporaryFile() as tmp_fasta_file:
+            with tempfile.SpooledTemporaryFile() as tmp_swarm_results:
+                for amplicon, abundance in swarm:
+                    sequence = all_amplicons[amplicon][1]
+                    print(">", amplicon, "_", str(abundance), "\n", sequence,
+                          sep="", file=tmp_fasta_file)
+                tmp_fasta_file.seek(0)  # rewind to the begining of the file
+                try:
+                    proc = subprocess.Popen(swarm_command,
+                                            stderr=tmp_swarm_results,
+                                            stdout=devnull,
+                                            stdin=tmp_fasta_file,
+                                            close_fds=True)
+                except (OSError, 2):
+                    print("Error ",
+                          "Cannot find the swarm binary in the $PATH directories\n",
+                          "Use -b /path/to/swarm to indicate the correct path.",
+                          sep="", file=sys.stderr)
+                    sys.exit(-1)
+                proc.wait()  # usefull or not?
+                tmp_swarm_results.seek(0)  # rewind to the begining of the file
+                graph_data = [line.strip().split("\t")[1:4]
+                              for line in tmp_swarm_results
+                              if line.startswith("@")]
+                return graph_data
+
+
+def build_graph(graph_data, amplicons, is_data_file):
+    """
+    List pairwise relations in a swarm. Note that not all pairwise
+    relations are stored. That's why the graph exploration must always
+    start from the most abundant amplicon, and must be reiterated for
+    sub-swarms after a breaking.
+    """
+    amplicon_index = {amplicon[0]: i for (i, amplicon)
+                      in enumerate(amplicons)}
+
+    G = [create_node() for _ in range(len(amplicons))]
+    
+    for i in range(len(amplicon_index)):
+        G[i].name = amplicons[i][0]  # The nodes hashed name
+        G[i].abundance = int(amplicons[i][1])  # the node's abundance
+        G[i].num = i  # ID in graph
+
+    if is_data_file:
+        with open(graph_data, "rU") as graph_data:
+            for line in graph_data:
+                ampliconA, ampliconB, differences = line.split()
+                ampliconA = amplicon_index[ampliconA]
+                ampliconB = amplicon_index[ampliconB]
+                G[ampliconA].neighbours.append(ampliconB)
+                G[ampliconB].neighbours.append(ampliconA)
+    else:
+        for line in graph_data:
+            ampliconA, ampliconB, differences = line
+            print(ampliconA, ampliconB)
+            ampliconA = amplicon_index[ampliconA]
+            ampliconB = amplicon_index[ampliconB]
+            G[ampliconA].neighbours.append(ampliconB)
+            G[ampliconB].neighbours.append(ampliconA)
+    
+    print("Graph size:", len(G))
+    
+    return G
+
+
 def initGraph(swarm_file, graph_data, is_data_file):
     """
     Initialize the graph structure and insert data
@@ -165,8 +276,8 @@ def initGraph(swarm_file, graph_data, is_data_file):
     ### Read amplicons from swarm file ###
     amplicons = []
     for line in swarm_file:
-        amplicons += [(amplicon.rsplit("_")[0],
-                      int(amplicon.rsplit("_")[1])) for
+        amplicons += [(amplicon.rsplit("_", 1)[0],
+                      int(amplicon.rsplit("_", 1)[1])) for
                       amplicon in line.strip().split(" ")]
 
     amplicon_index = {amplicon[0]: i for (i, amplicon)
@@ -228,7 +339,7 @@ def buildGraph(fasta_file, swarm_file, data_file, swarm_path):
         elif os.path.isfile("/usr/bin/swarm"):
             swarm = ["/usr/bin/swarm", "-b", "-d", "1"]
         ### else assume swarm file in same folder as this script
-        else #elif os.path.isfile("./swarm"):
+        else: #elif os.path.isfile("./swarm"):
             swarm = ["./swarm", "-b", "-d", "1"]
 
         with open(fasta_file, "rU") as fasta_file:
@@ -267,7 +378,7 @@ def buildGraph(fasta_file, swarm_file, data_file, swarm_path):
         sys.exit(0)
 
     print("Time:", time.clock()-tim)
-    print("\nNetwork size:", len(G))
+    print("\nGraph size:", len(G))
 
     return G
 
@@ -628,16 +739,36 @@ def main():
         parameters = option_parse()
 
     ### Build data structure ###
-    G = buildGraph(fasta_file, swarm_file, data_file, swarm_path)
+    #G = buildGraph(fasta_file, swarm_file, data_file, swarm_path)
+    
+    if fasta_file:
+        all_amplicons = fasta_parse(fasta_file)
 
-    ### Compute cuts and break swarm ###
-    new_swarm_seeds = breakSwarm(G, threshold, manualCut, parameters)
+    swarms = swarm_parse(swarm_file)
+    
+    #print(swarms)
 
-    ### Find new swarms ###
-    new_swarms = findNewSwarms(G, new_swarm_seeds)
+    for swarm in swarms:
+        top_amplicon, swarm_mass, swarm_size, top_abundance, amplicons = swarm
+        if swarm_size > 2:
+            if fasta_file:
+                # Run swarm to get the pairwise relationships
+                graph_raw_data = run_swarm(swarm_path, all_amplicons, amplicons, threshold)
+                # Build the graph of pairwise relationships
+                G = build_graph(graph_raw_data, amplicons, False)
+            else:
+                graph_raw_data = data_file
+                # Build the graph of pairwise relationships
+                G = build_graph(graph_raw_data, amplicons, True)
 
-    ### Output new swarm file ###
-    outputSwarmFile(G, new_swarms, swarm_file, fasta_file)
+            ### Compute cuts and break swarm ###
+            new_swarm_seeds = breakSwarm(G, threshold, manualCut, parameters)
+
+            ### Find new swarms ###
+            new_swarms = findNewSwarms(G, new_swarm_seeds)
+
+            ### Output new swarm file ###
+            outputSwarmFile(G, new_swarms, swarm_file, fasta_file)
 
     print("Total time used:", time.clock() - totim)
 
