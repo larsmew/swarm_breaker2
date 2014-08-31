@@ -10,7 +10,7 @@ __version__ = "$Revision: 1.2"
 from optparse import OptionParser
 from operator import itemgetter
 from collections import deque
-#from igraph import *
+# from igraph import *
 import tempfile
 import subprocess
 import sys
@@ -144,12 +144,12 @@ def outputSwarmFile(G, new_swarms, swarm_file, fasta_file):
         output_file_swarm = os.path.splitext(fasta_file)[0] + "_new.swarms"
     with open(output_file_swarm, 'w') as f:
         for swarm in new_swarms:
-            #print(" ".join([str(G[node[0]].name)+"_"+str(node[1])
+            # print(" ".join([str(G[node[0]].name)+"_"+str(node[1])
             #      for node in swarm]), file=f)
-            print(" ".join([node[2]+"_"+str(node[1])
-                 for node in swarm]), file=f)
+            print(" ".join([node[2] + "_" + str(node[1])
+                  for node in swarm]), file=f)
 
-    print("Time used to make output files:", time.clock()-tim)
+    print("Time used to make output files:", time.clock() - tim)
     return None
 
 
@@ -183,7 +183,8 @@ def swarm_parse(swarm_file):
     with open(swarm_file, "rU") as swarm_file:
         swarms = list()
         for line in swarm_file:
-            amplicons = [(amplicon.rsplit("_", 1)[0], int(amplicon.rsplit("_", 1)[1]))
+            amplicons = [(amplicon.rsplit("_", 1)[0],
+                         int(amplicon.rsplit("_", 1)[1]))
                          for amplicon in line.strip().split(" ")]
             # Sort amplicons by decreasing abundance and alphabetical order
             amplicons.sort(key=itemgetter(1, 0), reverse=True)
@@ -201,7 +202,7 @@ def run_swarm(binary, all_amplicons, swarm, threshold):
     """
     Write temporary fasta files, run swarm and collect the graph data
     """
-    #swarm_command = [binary, "-b", "-d", str(threshold)]
+    # swarm_command = [binary, "-b", "-d", str(threshold)]
     swarm_command = [binary, "-b", "-d", "1"]
     with open(os.devnull, "w") as devnull:
         with tempfile.SpooledTemporaryFile() as tmp_fasta_file:
@@ -219,15 +220,17 @@ def run_swarm(binary, all_amplicons, swarm, threshold):
                                             close_fds=True)
                 except (OSError, 2):
                     print("Error ",
-                          "Cannot find the swarm binary in the $PATH directories\n",
-                          "Use -b /path/to/swarm to indicate the correct path.",
+                          "Cannot find the swarm binary in the $PATH" +
+                          "directories\n",
+                          "Use -b /path/to/swarm to indicate the correct path",
                           sep="", file=sys.stderr)
                     sys.exit(-1)
                 proc.wait()  # usefull or not?
                 tmp_swarm_results.seek(0)  # rewind to the begining of the file
                 graph_data = [line.strip().split("\t")[1:4]
                               for line in tmp_swarm_results
-                              if line.startswith("@")]
+                              # if line.startswith("@")]
+                              if "@@" in line]
                 return graph_data
 
 
@@ -242,7 +245,7 @@ def build_graph(graph_data, amplicons, is_data_file):
                       in enumerate(amplicons)}
 
     G = [create_node() for _ in range(len(amplicons))]
-    
+
     for i in range(len(amplicon_index)):
         G[i].name = amplicons[i][0]  # The nodes hashed name
         G[i].abundance = int(amplicons[i][1])  # the node's abundance
@@ -264,9 +267,9 @@ def build_graph(graph_data, amplicons, is_data_file):
             ampliconB = amplicon_index[ampliconB]
             G[ampliconA].neighbours.append(ampliconB)
             G[ampliconB].neighbours.append(ampliconA)
-    
+
     print("Graph size:", len(G))
-    
+
     return G
 
 
@@ -284,12 +287,12 @@ def initGraph(swarm_file, graph_data, is_data_file):
 
     amplicon_index = {amplicon[0]: i for (i, amplicon)
                       in enumerate(amplicons)}
-    print("Time for reading swarm file:", time.clock()-tim2)
+    print("Time for reading swarm file:", time.clock() - tim2)
 
     tim2 = time.clock()
     # Initialize graph structure
     G = [create_node() for _ in range(len(amplicon_index))]
-    print("Time for creating graph:", time.clock()-tim2)
+    print("Time for creating graph:", time.clock() - tim2)
 
     tim2 = time.clock()
     # Insert name and abundance of each node in the graph
@@ -297,7 +300,7 @@ def initGraph(swarm_file, graph_data, is_data_file):
         G[i].name = amplicons[i][0]  # The nodes hashed name
         G[i].abundance = int(amplicons[i][1])  # the node's abundance
         G[i].num = i  # ID in graph
-    print("Time for inserting name, abundance, id:", time.clock()-tim2)
+    print("Time for inserting name, abundance, id:", time.clock() - tim2)
 
     tim2 = time.clock()
     for line in graph_data:
@@ -309,7 +312,7 @@ def initGraph(swarm_file, graph_data, is_data_file):
         ampliconB = amplicon_index[ampliconB]
         G[ampliconA].neighbours.append(ampliconB)
         G[ampliconB].neighbours.append(ampliconA)
-    print("Time for inserting nodes:", time.clock()-tim2)
+    print("Time for inserting nodes:", time.clock() - tim2)
 
     return G
 
@@ -335,13 +338,13 @@ def buildGraph(fasta_file, swarm_file, data_file, swarm_path):
         ### If swarm_path given
         if swarm_path:
             if swarm_path[-1] == "/":
-                swarm_path = swarm_path+"swarm"
+                swarm_path = swarm_path + "swarm"
             swarm = [swarm_path, "-b", "-d", "1"]
         ### else check if swarm binary in /usr/bin
         elif os.path.isfile("/usr/bin/swarm"):
             swarm = ["/usr/bin/swarm", "-b", "-d", "1"]
         ### else assume swarm file in same folder as this script
-        else: #elif os.path.isfile("./swarm"):
+        else:  # elif os.path.isfile("./swarm"):
             swarm = ["./swarm", "-b", "-d", "1"]
 
         with open(fasta_file, "rU") as fasta_file:
@@ -356,7 +359,7 @@ def buildGraph(fasta_file, swarm_file, data_file, swarm_path):
                                                  stdin=fasta_file,
                                                  close_fds=True)
                         popen.wait()
-                        print("Time for running swarm: ", time.clock()-tim2)
+                        print("Time for running swarm: ", time.clock() - tim2)
                     except:
                         print("ERROR: SWARM BINARY NOT FOUND OR NOT WORKING")
                         print("Either supply fasta file and Swarm",
@@ -370,7 +373,7 @@ def buildGraph(fasta_file, swarm_file, data_file, swarm_path):
                     graph_data = [line.strip().split("\t")[1:4]
                                   for line in tmp_swarm_results
                                   if line.startswith("@")]
-                    print("Time for extracting data: ", time.clock()-tim2)
+                    print("Time for extracting data: ", time.clock() - tim2)
                     ### rewind to the begining of the file
                     tmp_swarm_file.seek(0)
                     ### Initialize graph with obtained data
@@ -379,7 +382,7 @@ def buildGraph(fasta_file, swarm_file, data_file, swarm_path):
         print("ERROR: NO DATA AND SWARM FILES OR FASTA FILE GIVEN")
         sys.exit(0)
 
-    print("Time:", time.clock()-tim)
+    print("Time:", time.clock() - tim)
     print("\nGraph size:", len(G))
 
     return G
@@ -413,10 +416,10 @@ def manualCutter(G, possibleCuts):
             maxPeak = max(G[G[edge[0]].belongingRoot].abundance,
                           G[G[edge[1]].belongingRoot].abundance)
             weakPoint = min(G[edge[0]].abundance, G[edge[1]].abundance)
-            print("Valley ratio:", float(minPeak)/weakPoint)
-            print("Peak ratio  :", float(maxPeak)/minPeak)
-            answer = raw_input("Make cut between "+str(G[edge[0]].abundance) +
-                               " and "+str(G[edge[1]].abundance)+"? ")
+            print("Valley ratio:", float(minPeak) / weakPoint)
+            print("Peak ratio  :", float(maxPeak) / minPeak)
+            answer = raw_input("Make cut between " + str(G[edge[0]].abundance)
+                               + " and " + str(G[edge[1]].abundance) + "? ")
             if not answer == "n" or answer == "no" or answer == "nn":
                 finalCuts.append(edge)
     return finalCuts
@@ -432,9 +435,9 @@ def prettyPrintCuts(G, finalCuts):
     space2 = 20
     space3 = 18
     for edge in finalCuts:
-        len2 = space1-len(str([G[node].num for node in edge]))
-        len3 = space2-len(str([G[node].abundance for node in edge]))-4
-        len4 = space3-len(str([G[node].belongingRoot for node in edge]))-1
+        len2 = space1 - len(str([G[node].num for node in edge]))
+        len3 = space2 - len(str([G[node].abundance for node in edge])) - 4
+        len4 = space3 - len(str([G[node].belongingRoot for node in edge])) - 1
         print(" ", [G[node].num for node in edge], " " * len2,
               [G[node].abundance for node in edge], " " * len3,
               [G[node].belongingRoot for node in edge], " " * len4,
@@ -474,7 +477,7 @@ def assignParent(G, threshold):
                 node.parent = -2  # Has no parent
                 node.belongingRoot = node.num
 
-    print("Time:", time.clock()-tim)
+    print("Time:", time.clock() - tim)
 
     # Find name of node - Test purpose
     # if node.abundance == 2708:
@@ -530,7 +533,7 @@ def findBelongingRoot(G, possibleCuts):
                 #    G[n].belongingRoot = G[currentNode.parent].belongingRoot
                 G[node].belongingRoot = G[currentNode.parent].belongingRoot
 
-    print("Time:", time.clock()-tim)
+    print("Time:", time.clock() - tim)
 
 
 def rewireNode(G, possibleCuts, threshold, root=True):
@@ -563,10 +566,10 @@ def rewireNode(G, possibleCuts, threshold, root=True):
                             belongingRootAbundance = curAbundance
                             distance = dist
                         else:
-                            queue.append((dist+1, neighbour))
+                            queue.append((dist + 1, neighbour))
                 # G[node].parent = newParent
                 G[node].belongingRoot = G[newParent].belongingRoot
-    print("Time:", time.clock()-tim)
+    print("Time:", time.clock() - tim)
 
 
 def findFinalCuts(G, possibleCuts, threshold, manualCut, parameters):
@@ -595,8 +598,8 @@ def findFinalCuts(G, possibleCuts, threshold, manualCut, parameters):
                                       G[G[edge[1]].belongingRoot].abundance)
                     smalletsRoot = min(G[G[edge[0]].belongingRoot].abundance,
                                        G[G[edge[1]].belongingRoot].abundance)
-                    if (smalletsRoot/weakSpot > 25
-                        and biggestRoot/smalletsRoot < 10) \
+                    if (smalletsRoot / weakSpot > 25
+                        and biggestRoot / smalletsRoot < 10) \
                             or smalletsRoot / weakSpot > 50:
                         finalCuts.append(edge)
                 else:
@@ -625,7 +628,7 @@ def updateDataStructure(G, finalCuts):
                 G[node].seed = True
         G[edge[0]].neighbours.remove(edge[1])
         G[edge[1]].neighbours.remove(edge[0])
-    print("Updating final cuts in data structure:", time.clock()-tim)
+    print("Updating final cuts in data structure:", time.clock() - tim)
     #print "Seeds:\n", new_swarm_seeds
     print("Number of possible seeds:", len(new_swarm_seeds), "\n")
 
@@ -718,7 +721,7 @@ def findNewSwarms(G, seeds):
             new_swarm.sort(key=itemgetter(1, 2), reverse=True)
             new_swarms.append(new_swarm)
     print("Visited nodes:", count)
-    print("BFS time:", time.clock()-tim)
+    print("BFS time:", time.clock() - tim)
     print("Num swarms:", len(new_swarms))
     if count != len(G):
         print("ERROR: DATA LOST AFTER CUTTING.")
@@ -742,12 +745,12 @@ def main():
 
     ### Build data structure ###
     #G = buildGraph(fasta_file, swarm_file, data_file, swarm_path)
-    
+
     if fasta_file:
         all_amplicons = fasta_parse(fasta_file)
 
     swarms = swarm_parse(swarm_file)
-    
+
     #print(swarms)
 
     all_new_swarms = []
@@ -756,7 +759,8 @@ def main():
         if swarm_size > 2:
             if fasta_file:
                 # Run swarm to get the pairwise relationships
-                graph_raw_data = run_swarm(swarm_path, all_amplicons, amplicons, threshold)
+                graph_raw_data = run_swarm(swarm_path, all_amplicons,
+                                           amplicons, threshold)
                 # Build the graph of pairwise relationships
                 G = build_graph(graph_raw_data, amplicons, False)
             else:
@@ -769,7 +773,7 @@ def main():
 
             ### Find new swarms ###
             new_swarms = findNewSwarms(G, new_swarm_seeds)
-            
+
             for swarm in new_swarms:
                 all_new_swarms.append(swarm)
 
