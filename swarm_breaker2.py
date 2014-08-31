@@ -144,8 +144,10 @@ def outputSwarmFile(G, new_swarms, swarm_file, fasta_file):
         output_file_swarm = os.path.splitext(fasta_file)[0] + "_new.swarms"
     with open(output_file_swarm, 'w') as f:
         for swarm in new_swarms:
-            print(" ".join([str(G[node[0]].name)+"_"+str(node[1])
-                  for node in swarm]), file=f)
+            #print(" ".join([str(G[node[0]].name)+"_"+str(node[1])
+            #      for node in swarm]), file=f)
+            print(" ".join([node[2]+"_"+str(node[1])
+                 for node in swarm]), file=f)
 
     print("Time used to make output files:", time.clock()-tim)
     return None
@@ -748,6 +750,7 @@ def main():
     
     #print(swarms)
 
+    all_new_swarms = []
     for swarm in swarms:
         top_amplicon, swarm_mass, swarm_size, top_abundance, amplicons = swarm
         if swarm_size > 2:
@@ -766,9 +769,12 @@ def main():
 
             ### Find new swarms ###
             new_swarms = findNewSwarms(G, new_swarm_seeds)
+            
+            for swarm in new_swarms:
+                all_new_swarms.append(swarm)
 
-            ### Output new swarm file ###
-            outputSwarmFile(G, new_swarms, swarm_file, fasta_file)
+    ### Output new swarm file ###
+    outputSwarmFile(G, all_new_swarms, swarm_file, fasta_file)
 
     print("Total time used:", time.clock() - totim)
 
