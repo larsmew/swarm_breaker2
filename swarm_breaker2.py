@@ -18,11 +18,11 @@ import time
 import os
 
 
-#*****************************************************************************#
+# *************************************************************************** #
 #                                                                             #
 #                                Data structure                               #
 #                                                                             #
-#*****************************************************************************#
+# *************************************************************************** #
 
 class Node(object):
     """
@@ -50,11 +50,11 @@ def create_node():
     return node
 
 
-#*****************************************************************************#
+# *************************************************************************** #
 #                                                                             #
 #                                   Helpers                                   #
 #                                                                             #
-#*****************************************************************************#
+# *************************************************************************** #
 
 def option_parse():
     """
@@ -153,11 +153,11 @@ def outputSwarmFile(G, new_swarms, swarm_file, fasta_file):
     return None
 
 
-#*****************************************************************************#
+# *************************************************************************** #
 #                                                                             #
 #                                  Initializer                                #
 #                                                                             #
-#*****************************************************************************#
+# *************************************************************************** #
 
 def fasta_parse(fasta_file):
     """
@@ -278,7 +278,7 @@ def initGraph(swarm_file, graph_data, is_data_file):
     Initialize the graph structure and insert data
     """
     tim2 = time.clock()
-    ### Read amplicons from swarm file ###
+    # Read amplicons from swarm file
     amplicons = []
     for line in swarm_file:
         amplicons += [(amplicon.rsplit("_", 1)[0],
@@ -335,22 +335,22 @@ def buildGraph(fasta_file, swarm_file, data_file, swarm_path):
         """
         Create temporary data from fasta file using swarm.
         """
-        ### If swarm_path given
+        # If swarm_path given
         if swarm_path:
             if swarm_path[-1] == "/":
                 swarm_path = swarm_path + "swarm"
             swarm = [swarm_path, "-b", "-d", "1"]
-        ### else check if swarm binary in /usr/bin
+        # else check if swarm binary in /usr/bin
         elif os.path.isfile("/usr/bin/swarm"):
             swarm = ["/usr/bin/swarm", "-b", "-d", "1"]
-        ### else assume swarm file in same folder as this script
+        # else assume swarm file in same folder as this script
         else:  # elif os.path.isfile("./swarm"):
             swarm = ["./swarm", "-b", "-d", "1"]
 
         with open(fasta_file, "rU") as fasta_file:
             with tempfile.SpooledTemporaryFile() as tmp_swarm_file:
                 with tempfile.SpooledTemporaryFile() as tmp_swarm_results:
-                    ### Run Swarm
+                    # Run Swarm
                     try:
                         tim2 = time.clock()
                         popen = subprocess.Popen(swarm,
@@ -367,16 +367,16 @@ def buildGraph(fasta_file, swarm_file, data_file, swarm_path):
                         sys.exit()
 
                     tim2 = time.clock()
-                    ### rewind to the begining of the file
+                    # rewind to the begining of the file
                     tmp_swarm_results.seek(0)
-                    ### Create data for graph
+                    # Create data for graph
                     graph_data = [line.strip().split("\t")[1:4]
                                   for line in tmp_swarm_results
                                   if line.startswith("@")]
                     print("Time for extracting data: ", time.clock() - tim2)
-                    ### rewind to the begining of the file
+                    # rewind to the begining of the file
                     tmp_swarm_file.seek(0)
-                    ### Initialize graph with obtained data
+                    # Initialize graph with obtained data
                     G = initGraph(tmp_swarm_file, graph_data, False)
     else:
         print("ERROR: NO DATA AND SWARM FILES OR FASTA FILE GIVEN")
@@ -388,11 +388,11 @@ def buildGraph(fasta_file, swarm_file, data_file, swarm_path):
     return G
 
 
-#*****************************************************************************#
+# *************************************************************************** #
 #                                                                             #
 #                               Pretty printers                               #
 #                                                                             #
-#*****************************************************************************#
+# *************************************************************************** #
 
 def manualCutter(G, possibleCuts):
     """
@@ -442,14 +442,14 @@ def prettyPrintCuts(G, finalCuts):
               [G[node].abundance for node in edge], " " * len3,
               [G[node].belongingRoot for node in edge], " " * len4,
               [G[G[node].belongingRoot].abundance for node in edge])
-        #print [G[node].name for node in edge]
+        # print [G[node].name for node in edge]
 
 
-#*****************************************************************************#
+# *************************************************************************** #
 #                                                                             #
 #                            Tools for break swarm                            #
 #                                                                             #
-#*****************************************************************************#
+# *************************************************************************** #
 
 def assignParent(G, threshold):
     """
@@ -501,9 +501,9 @@ def findPossibleCuts(G):
                 if node.parent != neighbour and \
                    G[neighbour].parent != node.num:
                     possibleCuts.append((node.num, neighbour))
-    #print "Possible cuts:\n",possibleCuts
+    # print "Possible cuts:\n",possibleCuts
     print("found", len(possibleCuts), "possible cuts")
-    #prettyPrintCuts(G,possibleCuts,tim)
+    # prettyPrintCuts(G,possibleCuts,tim)
 
     print("Time:", time.clock() - tim)
     return possibleCuts
@@ -520,16 +520,16 @@ def findBelongingRoot(G, possibleCuts):
         for node in edge:
             if G[node].belongingRoot == -1:  # If -2 then already root
                 currentNode = G[node]
-                #path = [node]
+                # path = [node]
                 while G[currentNode.parent].belongingRoot == -1:
-                    #path.append(currentNode.parent)
+                    # path.append(currentNode.parent)
 
                     # Skip pair of nodes pointing at each other
                     if G[currentNode.parent].parent == currentNode.num:
                         G[currentNode.parent].belongingRoot = currentNode.num
                         break
                     currentNode = G[currentNode.parent]
-                #for n in path:
+                # for n in path:
                 #    G[n].belongingRoot = G[currentNode.parent].belongingRoot
                 G[node].belongingRoot = G[currentNode.parent].belongingRoot
 
@@ -578,7 +578,7 @@ def findFinalCuts(G, possibleCuts, threshold, manualCut, parameters):
     using parameters, or only using the threshold as tiebreaker.
     """
     print("\nFinding final cuts:")
-    ### Measure time ###
+    # Measure time#
     tim = time.clock()
 
     finalCuts = []
@@ -590,7 +590,7 @@ def findFinalCuts(G, possibleCuts, threshold, manualCut, parameters):
         for edge in possibleCuts:
             # Ignore candidates if both belongs to same root.
             if G[edge[0]].belongingRoot != G[edge[1]].belongingRoot:
-                ## TEST PURPOSE ONLY ##
+                # TEST PURPOSE ONLY
                 if parameters:
                     weakSpot = min(G[edge[0]].abundance,
                                    G[edge[1]].abundance)
@@ -605,7 +605,7 @@ def findFinalCuts(G, possibleCuts, threshold, manualCut, parameters):
                 else:
                     finalCuts.append(edge)
 
-    ### Print Final Cuts - if not too many ###
+    # Print Final Cuts - if not too many
     if finalCuts and len(finalCuts) < 100:
         prettyPrintCuts(G, finalCuts)
     print("Number of final cuts:", len(finalCuts))
@@ -629,41 +629,41 @@ def updateDataStructure(G, finalCuts):
         G[edge[0]].neighbours.remove(edge[1])
         G[edge[1]].neighbours.remove(edge[0])
     print("Updating final cuts in data structure:", time.clock() - tim)
-    #print "Seeds:\n", new_swarm_seeds
+    # print "Seeds:\n", new_swarm_seeds
     print("Number of possible seeds:", len(new_swarm_seeds), "\n")
 
     return new_swarm_seeds
 
 
-#*****************************************************************************#
+# *************************************************************************** #
 #                                                                             #
 #                                 Break swarm                                 #
 #                                                                             #
-#*****************************************************************************#
+# *************************************************************************** #
 
 def breakSwarm(G, threshold, manualCut, parameters):
     """
     Compute final cuts in the graph.
     """
-    ### Set THRESHOLD value ###
+    # Set THRESHOLD value
     # Default: Ignore roots below 100.
     # if threshold >= 1, then we ignore roots below threshold,
     # else we ignore a percentage of the whole network size.
     threshold = threshold if threshold >= 1 else threshold * len(G)
 
-    ### Assign a parent (biggest neighbour) to each node ###
+    # Assign a parent (biggest neighbour) to each node
     assignParent(G, threshold)
 
-    ### Find possible cuts ###
+    # Find possible cuts
     possibleCuts = findPossibleCuts(G)
 
-    ### Find belonging root to each node in possibleCuts ###
+    # Find belonging root to each node in possibleCuts
     findBelongingRoot(G, possibleCuts)
 
-    ### rewire nodes with small belonging roots ###
+    # rewire nodes with small belonging roots
     rewireNode(G, possibleCuts, threshold)
 
-    ### find final cuts: manually, parameter, or only by threshold ###
+    # find final cuts: manually, parameter, or only by threshold
     finalCuts = findFinalCuts(G, possibleCuts, threshold,
                               manualCut, parameters)
 
@@ -687,7 +687,7 @@ def breakSwarm(G, threshold, manualCut, parameters):
     # print [G[G[nod].neighbours[i]].abundance
     #        for i in range(len(G[nod].neighbours))]
 
-    ### Update data structure with final cuts
+    # Update data structure with final cuts
     new_swarm_seeds = updateDataStructure(G, finalCuts)
 
     return new_swarm_seeds
@@ -728,30 +728,30 @@ def findNewSwarms(G, seeds):
     return new_swarms
 
 
-#*****************************************************************************#
+# *************************************************************************** #
 #                                                                             #
 #                                     Main                                    #
 #                                                                             #
-#*****************************************************************************#
+# *************************************************************************** #
 def main():
     """
     Main method of the program
     """
     totim = time.clock()
 
-    ### Parse command line options ###
+    # Parse command line options
     fasta_file, swarm_file, data_file, threshold, swarm_path, manualCut, \
         parameters = option_parse()
 
-    ### Build data structure ###
-    #G = buildGraph(fasta_file, swarm_file, data_file, swarm_path)
+    # Build data structure
+    # G = buildGraph(fasta_file, swarm_file, data_file, swarm_path)
 
     if fasta_file:
         all_amplicons = fasta_parse(fasta_file)
 
     swarms = swarm_parse(swarm_file)
 
-    #print(swarms)
+    # print(swarms)
 
     all_new_swarms = []
     for swarm in swarms:
@@ -768,16 +768,17 @@ def main():
                 # Build the graph of pairwise relationships
                 G = build_graph(graph_raw_data, amplicons, True)
 
-            ### Compute cuts and break swarm ###
+            # Compute cuts and break swarm
             new_swarm_seeds = breakSwarm(G, threshold, manualCut, parameters)
 
-            ### Find new swarms ###
+            # Find new swarms
             new_swarms = findNewSwarms(G, new_swarm_seeds)
 
+            # Add to list of all new swarms found
             for swarm in new_swarms:
                 all_new_swarms.append(swarm)
 
-    ### Output new swarm file ###
+    # Output new swarm file
     outputSwarmFile(G, all_new_swarms, swarm_file, fasta_file)
 
     print("Total time used:", time.clock() - totim)
