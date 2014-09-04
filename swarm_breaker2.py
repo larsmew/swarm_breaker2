@@ -138,18 +138,19 @@ def outputSwarmFile(G, new_swarms, swarm_file, fasta_file):
     """
     tim = time.clock()
 
-    if swarm_file:
-        output_file_swarm = os.path.splitext(swarm_file)[0] + "_new.swarms"
-    else:
-        output_file_swarm = os.path.splitext(fasta_file)[0] + "_new.swarms"
-    with open(output_file_swarm, 'w') as f:
-        for swarm in new_swarms:
-            # print(" ".join([str(G[node[0]].name)+"_"+str(node[1])
-            #      for node in swarm]), file=f)
-            print(" ".join([node[2] + "_" + str(node[1])
-                  for node in swarm]), file=f)
+    # if swarm_file:
+    #     output_file_swarm = os.path.splitext(swarm_file)[0] + "_new.swarms"
+    # else:
+    #     output_file_swarm = os.path.splitext(fasta_file)[0] + "_new.swarms"
+    # with open(output_file_swarm, 'w') as f:
+    for swarm in new_swarms:
+        # print(" ".join([str(G[node[0]].name)+"_"+str(node[1])
+        #      for node in swarm]), file=f)
+        print(" ".join([node[2] + "_" + str(node[1])
+              for node in swarm]), file=sys.stdout)
 
-    print("Time used to make output files:", time.clock() - tim)
+    print("Time used to make output files:", time.clock() - tim,
+          file=sys.stderr)
     return None
 
 
@@ -262,13 +263,12 @@ def build_graph(graph_data, amplicons, is_data_file):
     else:
         for line in graph_data:
             ampliconA, ampliconB, differences = line
-            print(ampliconA, ampliconB)
             ampliconA = amplicon_index[ampliconA]
             ampliconB = amplicon_index[ampliconB]
             G[ampliconA].neighbours.append(ampliconB)
             G[ampliconB].neighbours.append(ampliconA)
 
-    print("Graph size:", len(G))
+    print("Graph size:", len(G), file=sys.stderr)
 
     return G
 
@@ -429,8 +429,8 @@ def prettyPrintCuts(G, finalCuts):
     """
     A bad trial to give a nice output of the cuts.
     """
-    print("[Cand for cut]    [Cand abundance]    ", end=" ")
-    print("[Closest root]    [Roots abundance]")
+    print("[Cand for cut]    [Cand abundance]    ", end=" ", file=sys.stderr)
+    print("[Closest root]    [Roots abundance]", file=sys.stderr)
     space1 = 18
     space2 = 20
     space3 = 18
@@ -441,7 +441,8 @@ def prettyPrintCuts(G, finalCuts):
         print(" ", [G[node].num for node in edge], " " * len2,
               [G[node].abundance for node in edge], " " * len3,
               [G[node].belongingRoot for node in edge], " " * len4,
-              [G[G[node].belongingRoot].abundance for node in edge])
+              [G[G[node].belongingRoot].abundance for node in edge],
+              file=sys.stderr)
         # print [G[node].name for node in edge]
 
 
@@ -455,7 +456,7 @@ def assignParent(G, threshold):
     """
     Assign biggest neighbour as parent for each node in graph
     """
-    print("\nAssigning parents")
+    print("\nAssigning parents", file=sys.stderr)
     tim = time.clock()
 
     for node in G:
@@ -477,7 +478,7 @@ def assignParent(G, threshold):
                 node.parent = -2  # Has no parent
                 node.belongingRoot = node.num
 
-    print("Time:", time.clock() - tim)
+    print("Time:", time.clock() - tim, file=sys.stderr)
 
     # Find name of node - Test purpose
     # if node.abundance == 2708:
@@ -491,7 +492,7 @@ def findPossibleCuts(G):
     Find possible cuts by finding edges where no nodes is
     pointing from or to it.
     """
-    print("\nFinding possible cuts...", end="")
+    print("\nFinding possible cuts...", end="", file=sys.stderr)
     tim = time.clock()
 
     possibleCuts = []
@@ -502,10 +503,10 @@ def findPossibleCuts(G):
                    G[neighbour].parent != node.num:
                     possibleCuts.append((node.num, neighbour))
     # print "Possible cuts:\n",possibleCuts
-    print("found", len(possibleCuts), "possible cuts")
+    print("found", len(possibleCuts), "possible cuts", file=sys.stderr)
     # prettyPrintCuts(G,possibleCuts,tim)
 
-    print("Time:", time.clock() - tim)
+    print("Time:", time.clock() - tim, file=sys.stderr)
     return possibleCuts
 
 
@@ -513,7 +514,7 @@ def findBelongingRoot(G, possibleCuts):
     """
     Find corresponding root for each node in possible cuts
     """
-    print("\nFinding belonging roots")
+    print("\nFinding belonging roots", file=sys.stderr)
     tim = time.clock()
 
     for edge in possibleCuts:
@@ -533,7 +534,7 @@ def findBelongingRoot(G, possibleCuts):
                 #    G[n].belongingRoot = G[currentNode.parent].belongingRoot
                 G[node].belongingRoot = G[currentNode.parent].belongingRoot
 
-    print("Time:", time.clock() - tim)
+    print("Time:", time.clock() - tim, file=sys.stderr)
 
 
 def rewireNode(G, possibleCuts, threshold, root=True):
@@ -544,7 +545,7 @@ def rewireNode(G, possibleCuts, threshold, root=True):
     belonging root. Testing which version is better - rewire from root
     seems most promising.
     """
-    print("\nRewiring nodes")
+    print("\nRewiring nodes", file=sys.stderr)
     tim = time.clock()
 
     for possibleCut in possibleCuts:
@@ -569,7 +570,7 @@ def rewireNode(G, possibleCuts, threshold, root=True):
                             queue.append((dist + 1, neighbour))
                 # G[node].parent = newParent
                 G[node].belongingRoot = G[newParent].belongingRoot
-    print("Time:", time.clock() - tim)
+    print("Time:", time.clock() - tim, file=sys.stderr)
 
 
 def findFinalCuts(G, possibleCuts, threshold, manualCut, parameters):
@@ -577,7 +578,7 @@ def findFinalCuts(G, possibleCuts, threshold, manualCut, parameters):
     Find final cuts, either by manually deciding the cuts or by
     using parameters, or only using the threshold as tiebreaker.
     """
-    print("\nFinding final cuts:")
+    print("\nFinding final cuts:", file=sys.stderr)
     # Measure time#
     tim = time.clock()
 
@@ -608,8 +609,8 @@ def findFinalCuts(G, possibleCuts, threshold, manualCut, parameters):
     # Print Final Cuts - if not too many
     if finalCuts and len(finalCuts) < 100:
         prettyPrintCuts(G, finalCuts)
-    print("Number of final cuts:", len(finalCuts))
-    print("Time:", time.clock() - tim, "\n")
+    print("Number of final cuts:", len(finalCuts), file=sys.stderr)
+    print("Time:", time.clock() - tim, "\n", file=sys.stderr)
 
     return finalCuts
 
@@ -628,9 +629,11 @@ def updateDataStructure(G, finalCuts):
                 G[node].seed = True
         G[edge[0]].neighbours.remove(edge[1])
         G[edge[1]].neighbours.remove(edge[0])
-    print("Updating final cuts in data structure:", time.clock() - tim)
+    print("Updating final cuts in data structure:", time.clock() - tim,
+          file=sys.stderr)
     # print "Seeds:\n", new_swarm_seeds
-    print("Number of possible seeds:", len(new_swarm_seeds), "\n")
+    print("Number of possible seeds:", len(new_swarm_seeds), "\n",
+          file=sys.stderr)
 
     return new_swarm_seeds
 
@@ -697,7 +700,7 @@ def findNewSwarms(G, seeds):
     """
     Performing breadth-first search (BFS) from seeds to find new swarms
     """
-    print("Performing BFS to discover new swarms...")
+    print("Performing BFS to discover new swarms...", file=sys.stderr)
     tim = time.clock()
     new_swarms = []
     count = 0
@@ -720,11 +723,11 @@ def findNewSwarms(G, seeds):
             # Sort amplicons by decreasing abundance and alphabetical order
             new_swarm.sort(key=itemgetter(1, 2), reverse=True)
             new_swarms.append(new_swarm)
-    print("Visited nodes:", count)
-    print("BFS time:", time.clock() - tim)
-    print("Num swarms:", len(new_swarms))
+    print("Visited nodes:", count, file=sys.stderr)
+    print("BFS time:", time.clock() - tim, file=sys.stderr)
+    print("Num swarms:", len(new_swarms), file=sys.stderr)
     if count != len(G):
-        print("ERROR: DATA LOST AFTER CUTTING.")
+        print("ERROR: DATA LOST AFTER CUTTING.", file=sys.stderr)
     return new_swarms
 
 
@@ -781,7 +784,7 @@ def main():
     # Output new swarm file
     outputSwarmFile(G, all_new_swarms, swarm_file, fasta_file)
 
-    print("Total time used:", time.clock() - totim)
+    print("Total time used:", time.clock() - totim, file=sys.stderr)
 
 
 if __name__ == '__main__':
